@@ -163,14 +163,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.direction = 'right'
         
         #w = 70 if attacking else 35
-        self.rect = pygame.Rect(0, 0, 35, 100)
-        self.rect.center = (100, 600)
+        self.rect = pygame.Rect(0, 0, 40, 100)
+        self.rect.center = (100, 450)
 
         #speed
         self.move_speed = 150 
         self.quick_move_speed = 200
         self.dash_speed = 200
-        self.jump_speed = 200
+        self.jump_speed = 300
         
         self.isHoldingLeft = False
         self.isHoldingRight = False
@@ -202,9 +202,17 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.ChangeStatus('stand')
             elif self.attacking:
                 self.attacking = False
+                if self.direction == "right":
+                    self.rect.centerx -= 30
+                else: 
+                    self.rect.centerx += 50
                 self.ChangeStatus('stand')
             elif self.attacking_2:
                 self.attacking_2 = False
+                if self.direction == "right":
+                    self.rect.centerx -= 30
+                else: 
+                    self.rect.centerx += 50
                 self.ChangeStatus('stand')
             elif self.dashing:
                 self.dashing = False
@@ -215,12 +223,30 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.frameTime += deltaTime
          
         frame = self.GetActiveFrame()
-            
-        if self.attacking:
-            self.rect.w = 70
+        
+        if self.attacking or self.attacking_2:
+            self.rect.w = 60
         else:
-            self.rect.w = 35
+            self.rect.w = 40
 
+        
+        rect = frame.get_rect()
+        rect.center = self.rect.center
+        
+        if self.attacking or self.attacking_2:
+            if self.direction == 'right':
+                rect.centerx -= 30
+            else:
+                rect.centerx += 30
+                
+        
+        if self.direction == 'right':      
+            rect.centerx += 10
+        else:
+            rect.centerx -= 10
+
+        
+        
         if self.status == 'move' or self.status == 'dash' or self.status == 'quick_move':
             speed = self.move_speed if self.status == 'move' else self.dash_speed
             
@@ -231,12 +257,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.rect.centerx -= speed * deltaTime / 1000
         
         if self.jumping:
-            if self.rect.y + self.rect.h <= self.tartget_height:
+            if self.jump_speed <= 0:
                 self.jumping = False
+                self.jump_speed = 0
                 self.ChangeStatus('fall')
 
             else:
                 self.rect.centery -= self.jump_speed * deltaTime / 1000
+                self.jump_speed = self.jump_speed - 700 * deltaTime / 1000
                 if self.isHoldingLeft:
                     self.rect.centerx -= self.move_speed * deltaTime / 1000
                 elif self.isHoldingRight:
@@ -244,12 +272,16 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         if self.falling:
             self.rect.centery += self.jump_speed * deltaTime / 1000
+            self.jump_speed  = self.jump_speed + 700 *deltaTime / 1000
+            if self.jump_speed > 300: self.jump_speed = 300
             if self.isHoldingLeft:
                 self.rect.centerx -= self.move_speed * deltaTime / 1000
             elif self.isHoldingRight:
                 self.rect.centerx += self.move_speed * deltaTime / 1000
 
-        self.SCREEN.blit(frame, self.rect)
+        #pygame.draw.rect(self.SCREEN, (0, 0, 255), rect)
+        #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
+        self.SCREEN.blit(frame, rect)
        
             
         
@@ -386,13 +418,19 @@ class WarriorAnimation(pygame.sprite.Sprite):
             return
         
         if self.quick_moving:
-            return
+            if status == 'fall':
+                self.quick_moving = False
+            else:
+                return
         
         if self.fainting:
             return
         
         if self.dashing:
-            return
+            if status == 'fall':
+                self.dashing = False
+            else:
+                return
         
         if self.jumping:
             #check xem có chạm đất k ở đây
@@ -414,12 +452,15 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
         elif status == 'attack':
             self.attacking = True
+            if self.direction == 'right':
+                self.rect.centerx += 30
+            else:
+                self.rect.centerx -= 50
             self.currentFrameNums = self.action_num_frames['attack']
             
         elif status == 'jump':
             self.jumping = True
-            self.current_height = self.rect.y + self.rect.h
-            self.tartget_height = self.current_height - 100
+            self.jump_speed = 400
             self.currentFrameNums = self.action_num_frames['jump']   
             
         elif status == 'fall':
@@ -440,6 +481,10 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
         elif self.status == 'attack_2':
             self.attacking_2 = True
+            if self.direction == 'right':
+                self.rect.centerx += 30
+            else:
+                self.rect.centerx -= 50
             self.currentFrameNums = self.action_num_frames['attack_2']
             
         elif self.status == 'dash':
@@ -447,7 +492,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.currentFrameNums = self.action_num_frames['dash']
 
         
-    def IsOnGround(self, ground : pygame.surface.Surface):
-        if pygame.Rect.colliderect(self.rect, ground) and self.rect.y < ground.y:
-            self.rect.bottom = ground.top
-            return True
+    def IsColliding(self, ground : pygame.surface.Surface) -> (bool, str):
+        if pygame.Rect.colliderect(self.rect, ground) and self.rect.y + self.rect.h - 10 <= ground.y \
+            and self.rect.x + self.rect.w - 10 > ground.x and self.rect.x < ground.x + ground.w - 10:
+                return (True, 'On')
+        
+        return (False, None)

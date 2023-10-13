@@ -4,15 +4,29 @@ from .background import Ground
 
 class Processor:
     
-    def __init__(self, warrior : WarriorAnimation, background : Ground) -> None:
+    def __init__(self, warrior : WarriorAnimation, ground : Ground) -> None:
         self.warrior = warrior
-        self.background = background
+        self.ground = ground
         
     def process(self):
-        if self.warrior.falling:
-            bottom_ground = self.background.map[-1]
-            for ground in bottom_ground:
-                if len(ground) == 2 and self.warrior.IsOnGround(ground[1]):
+        #falling
+        falling = True
+        for ground in self.ground.map:
+            
+            if len(ground) == 2:
+                if abs(ground[1].x - self.warrior.rect.x) > 100:
+                    continue
+                if abs(ground[1].y - self.warrior.rect.y) > 100:
+                    continue
+            
+                ret, pos = self.warrior.IsColliding(ground[1])
+                if not ret: 
+                    continue
+                if pos == 'On':
+                    falling = False
                     self.warrior.falling = False
-                    self.warrior.ChangeStatus('stand')
                     break
+                  
+                
+        if falling:
+            self.warrior.ChangeStatus('fall')
