@@ -70,6 +70,9 @@ class Processor:
                     elif pos == 'Down':
                         self.warrior.jumping = False
                         self.warrior.ChangeStatus('fall')
+                        
+                    elif pos == 'TopLeft' or pos == 'TopRight':
+                        self.warrior.ChangeStatus('hanging')
 
         
         if falling:

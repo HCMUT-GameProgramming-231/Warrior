@@ -168,7 +168,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.collide_left = False
         self.collide_right = False
         #w = 70 if attacking else 35
-        self.rect = pygame.Rect(0, 0, 30, 80)
+        self.rect = pygame.Rect(0, 0, 20, 90)
         self.rect.center = (100, 450)
 
         #speed
@@ -203,7 +203,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving:
                 self.direction = 'right' 
                 self.isHoldingRight = True
-                self.ChangeStatus('move')
+            self.ChangeStatus('move')
         
         if keystate[pygame.K_LEFT]:
             standing = False
@@ -241,6 +241,10 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.faint_time = pygame.time.get_ticks()
             self.ChangeStatus('faint')
         
+        if keystate[pygame.K_h]:
+            standing = False
+            self.ChangeStatus('hanging')
+        
         if standing:
             self.ChangeStatus('stand')
     
@@ -260,10 +264,13 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 return
         
         if self.jumping:
-            return
+                return
         
         if self.falling:
-            return
+            if  status == 'hanging':
+                self.falling = False
+            else:
+                return
         
         if self.fainting:
             return
@@ -271,6 +278,12 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if self.stand_up:
             return
         
+        if self.hanging:
+            if status == 'jump':
+                self.hanging = False
+            else:
+                return       
+         
         if status == 'dash' and self.status != 'move': 
             return
         
@@ -308,6 +321,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
         elif status == 'stand_up':
             self.stand_up = True
             self.currentFrameNums = self.action_num_frames['stand_up']
+        elif status == 'hanging':
+            self.hanging = True
+            self.currentFrameNums = self.action_num_frames['hanging']
     
     def Update(self, fps):
         newTime = pygame.time.get_ticks()
@@ -335,6 +351,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
             elif self.attacking_2:
                 self.attacking_2 = False
 
+            elif self.hanging:
+                self.frameIndex = 2
+            
             elif self.quick_moving:
                 self.quick_moving =  False
 
@@ -448,7 +467,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         rect.centery -= 10
         
         #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
-        #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
+        pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
         self.SCREEN.blit(frame, rect)
             
         
@@ -524,10 +543,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
             else:
                
                 if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x + 10:
+                    print (abs(self.rect.y - rect.y))
+                    if abs(self.rect.y - rect.y) <= 5:
+                        return True, 'TopLeft'
                     return True, 'Left'
   
                 if self.rect.x <= rect.x + rect.w:
-                   
+                    if abs(self.rect.y - rect.y) <= 5:
+                       return True, 'TopRight'
                     return True, 'Right'
 
         return False, None
