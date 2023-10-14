@@ -18,10 +18,8 @@ while True:
     
     w.GetEvent(ev)
     
-    proc.process()
-    
-    bg.Update()
-    w.Update(clock.get_time(), 60)
+    proc.Update(60)
+
 
     pygame.display.update()
     clock.tick(60)

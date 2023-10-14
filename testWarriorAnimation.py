@@ -3,7 +3,7 @@ import pygame
 
 pygame.init()
 
-SCREEN = pygame.display.set_mode((1500, 750))
+SCREEN = pygame.display.set_mode((1500, 750), vsync=1)
 w = warrior.WarriorAnimation(SCREEN)
 
 clock = pygame.time.Clock()
@@ -17,7 +17,7 @@ while True:
     w.GetEvent(ev)
 
     
-    w.Update(clock.get_time(), 60)
+    w.Update(60)
     
 
     pygame.display.update()

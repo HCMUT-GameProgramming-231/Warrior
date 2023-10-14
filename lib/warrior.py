@@ -1,6 +1,7 @@
 import pygame
 from .spritesheet import spritesheet
 import random
+import copy
 
 class WarriorAnimation(pygame.sprite.Sprite):
     
@@ -137,9 +138,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
         #init start status
         self.frameTime = 0
         self.frameIndex = 0
-        self.currentFrameNums = 5
+        self.currentFrameNums = 6
         
-        self.status = 'fall'
+        self.status = 'stand'
         
         self.attacking = False
         
@@ -147,11 +148,13 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.tartget_height = self.current_height + 200
         self.jumping = False
         
-        self.falling = True
+        self.falling = False
         
-        self.faint_delay = 2000
+        self.faint_delay = 1300
         self.faint_time = 0
         self.fainting = False
+        
+        self.hanging = False
         
         self.stand_up = False
         
@@ -162,127 +165,291 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         self.direction = 'right'
         
+        self.collide_left = False
+        self.collide_right = False
         #w = 70 if attacking else 35
-        self.rect = pygame.Rect(0, 0, 40, 100)
+        self.rect = pygame.Rect(0, 0, 30, 80)
         self.rect.center = (100, 450)
 
         #speed
-        self.move_speed = 150 
-        self.quick_move_speed = 200
-        self.dash_speed = 200
-        self.jump_speed = 300
+        self.move_speed = 200 
+        self.quick_move_speed = 300
+        self.dash_speed = 300
+        self.jump_speed = 400
         
         self.isHoldingLeft = False
         self.isHoldingRight = False
+        
+        self.timeFromBeginning = 0
+        self.currentTime = 0
+        self.DELTA = 0.01
+        self.currentFrameTime = 0
 
+        #self.lastState = None
+        self.accumulator = 0
+    
+    def GetEvent(self, events):
         
-    def Update(self, deltaTime, fps):
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
         
-        if self.frameTime > 1000 / fps:
+        standing = True
+        self.isHoldingLeft = False
+        self.isHoldingRight = False
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_RIGHT]:
+            standing = False
+            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving:
+                self.direction = 'right' 
+                self.isHoldingRight = True
+                self.ChangeStatus('move')
+        
+        if keystate[pygame.K_LEFT]:
+            standing = False
+            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving:
+                self.direction = 'left' 
+                self.isHoldingLeft = True
+            self.ChangeStatus('move')
+        
+        if keystate[pygame.K_x]:
+            standing = False
+            i = random.randint(1, 10)
+            if i < 4:
+                self.ChangeStatus('attack_2')
+            else:
+                self.ChangeStatus('attack')
+                
+        if keystate[pygame.K_z]:
+            standing = False
+            self.ChangeStatus('quick_move')
+        
+        if keystate[pygame.K_c]:
+            standing = False
+            self.ChangeStatus('dash')
+        
+        if keystate[pygame.K_UP]:
+            standing = False
+            self.ChangeStatus('jump')
+        
+        if keystate[pygame.K_q]:
+            standing = False
+            self.ChangeStatus('fall')
+        
+        if keystate[pygame.K_f]:
+            standing = False
+            self.faint_time = pygame.time.get_ticks()
+            self.ChangeStatus('faint')
+        
+        if standing:
+            self.ChangeStatus('stand')
+    
+    def ChangeStatus(self, status):
+        if self.status == status:
+            return
+        
+        if self.attacking or self.attacking_2:
+            return
+        
+        if self.quick_moving:
+            if status != 'fall':
+                return
+        
+        if self.dashing:
+            if status != 'fall':
+                return
+        
+        if self.jumping:
+            return
+        
+        if self.falling:
+            return
+        
+        if self.fainting:
+            return
+        
+        if self.stand_up:
+            return
+        
+        if status == 'dash' and self.status != 'move': 
+            return
+        
+        self.status = status
+        self.frameIndex = 0
+        
+        if status == 'move':
+            self.currentFrameNums = self.action_num_frames['move']
+            
+        elif status =='stand':
+            self.currentFrameNums = self.action_num_frames['stand']
+        elif status == 'attack':
+            self.attacking = True
+            self.currentFrameNums = self.action_num_frames['attack']
+        elif status == 'attack_2':
+            self.attacking_2 = True
+            self.currentFrameNums = self.action_num_frames['attack_2']
+        elif status == 'quick_move':
+            self.quick_moving = True
+            self.currentFrameNums = self.action_num_frames['quick_move']
+        elif status == 'dash':
+            self.dashing = True
+            self.currentFrameNums = self.action_num_frames['dash']
+        elif status == 'jump':
+            self.jumping = True
+            self.jump_speed = 400
+            self.currentFrameNums = self.action_num_frames['jump']
+        elif status == 'fall':
+            self.falling = True
+            self.jump_speed = 50
+            self.currentFrameNums = self.action_num_frames['fall']
+        elif status == 'faint':
+            self.fainting = True
+            self.currentFrameNums = self.action_num_frames['faint']
+        elif status == 'stand_up':
+            self.stand_up = True
+            self.currentFrameNums = self.action_num_frames['stand_up']
+    
+    def Update(self, fps):
+        newTime = pygame.time.get_ticks()
+            
+        
+        if self.currentFrameTime > 1 / fps:
             frames_per_sprite = fps / self.currentFrameNums
             if self.attacking_2:
                 self.frameIndex += 1.75 / frames_per_sprite
+            elif self.jumping or self.falling:
+                self.frameIndex += 3 / frames_per_sprite
             else:
                 self.frameIndex += 2 / frames_per_sprite
                 
-            self.frameTime = 0
+            self.currentFrameTime = 0
         
-        if self.frameIndex >= self.currentFrameNums:  
-            if self.fainting :
-                self.frameIndex = self.currentFrameNums -1
-            elif self.falling:
-                self.frameIndex = 2
-            elif self.jumping:
-                self.frameIndex = 0
-            elif self.stand_up:
-                self.stand_up = False
-                self.ChangeStatus('stand')
-            elif self.quick_moving:
-                self.quick_moving = False
-                self.ChangeStatus('stand')
-            elif self.attacking:
+        if self.frameIndex >= self.currentFrameNums:
+            self.frameIndex = self.frameIndex % self.currentFrameNums
+            standing = True
+            
+            
+            if self.attacking:
                 self.attacking = False
-                if self.direction == "right":
-                    self.rect.centerx -= 30
-                else: 
-                    self.rect.centerx += 50
-                self.ChangeStatus('stand')
+
             elif self.attacking_2:
                 self.attacking_2 = False
-                if self.direction == "right":
-                    self.rect.centerx -= 30
-                else: 
-                    self.rect.centerx += 50
-                self.ChangeStatus('stand')
+
+            elif self.quick_moving:
+                self.quick_moving =  False
+
             elif self.dashing:
                 self.dashing = False
-                self.ChangeStatus('stand')
-            else:
-                self.frameIndex = self.frameIndex % self.currentFrameNums
-        
-        self.frameTime += deltaTime
-         
-        frame = self.GetActiveFrame()
-        
-        if self.attacking or self.attacking_2:
-            self.rect.w = 60
-        else:
-            self.rect.w = 40
-
-        
-        rect = frame.get_rect()
-        rect.center = self.rect.center
-        
-        if self.attacking or self.attacking_2:
-            if self.direction == 'right':
-                rect.centerx -= 30
-            else:
-                rect.centerx += 30
+            
+            elif self.jumping:
+                self.frameIndex = 1
                 
+            elif self.falling:
+                self.frameIndex = 2
+            
+            elif self.fainting:
+                self.frameIndex = self.currentFrameNums - 1
+                if newTime - self.faint_time > self.faint_delay:
+                    self.fainting = False
+                    standing = False
+                    self.ChangeStatus('stand_up')
+                    
+            elif self.stand_up:
+                self.stand_up = False
+            
+            if standing:
+                self.ChangeStatus('stand')
+            
+            
+            
+            
         
-        if self.direction == 'right':      
-            rect.centerx += 10
-        else:
-            rect.centerx -= 10
+        """
+        alpha = self.accumulator / self.DELTA
+        renderState = self  + self.lastState
 
+        print(renderState.rect.centerx)
+        renderState.Render()
+        """
+       
+        self.Render()
         
+    
+        
+    def Intergrate(self, deltaTime):
+        
+        self.timeFromBeginning += self.DELTA
+        self.currentFrameTime += self.DELTA
+        
+        if not self.collide_left and not self.collide_right:
+            self.move_speed = 200
+            self.dash_speed = 300
+        
+        if self.collide_left == True:
+            if self.direction == 'left':
+                self.move_speed = 200
+                self.dash_speed = 300
+                
+        if self.collide_right == True:
+            if self.direction == 'right':
+                self.move_speed = 200
+                self.dash_speed = 300
         
         if self.status == 'move' or self.status == 'dash' or self.status == 'quick_move':
             speed = self.move_speed if self.status == 'move' else self.dash_speed
-            
             if self.direction == 'right':
-                self.rect.centerx += speed * deltaTime / 1000
- 
+                self.rect.centerx += int(speed * deltaTime)
             else:
-                self.rect.centerx -= speed * deltaTime / 1000
-        
-        if self.jumping:
-            if self.jump_speed <= 0:
-                self.jumping = False
+                self.rect.centerx -= int(speed * deltaTime)
+                
+        if self.status == 'jump':
+            self.rect.centery -= int(self.jump_speed * deltaTime)
+            self.jump_speed -= int(500 * deltaTime)
+            
+            if self.jump_speed <= 80:
                 self.jump_speed = 0
+                self.jumping = False
                 self.ChangeStatus('fall')
-
-            else:
-                self.rect.centery -= self.jump_speed * deltaTime / 1000
-                self.jump_speed = self.jump_speed - 700 * deltaTime / 1000
-                if self.isHoldingLeft:
-                    self.rect.centerx -= self.move_speed * deltaTime / 1000
-                elif self.isHoldingRight:
-                    self.rect.centerx += self.move_speed * deltaTime / 1000
-        
-        if self.falling:
-            self.rect.centery += self.jump_speed * deltaTime / 1000
-            self.jump_speed  = self.jump_speed + 700 *deltaTime / 1000
-            if self.jump_speed > 300: self.jump_speed = 300
+                
             if self.isHoldingLeft:
-                self.rect.centerx -= self.move_speed * deltaTime / 1000
+                self.rect.centerx -= int(self.move_speed * deltaTime)
             elif self.isHoldingRight:
-                self.rect.centerx += self.move_speed * deltaTime / 1000
+                self.rect.centerx += int(self.move_speed * deltaTime)
+        
+        if self.status == 'fall':
+            self.rect.centery += int(self.jump_speed * deltaTime)
+            self.jump_speed += int(500 * deltaTime)
+            
+            if self.jump_speed >= 400:
+                self.jump_speed = 400
 
-        #pygame.draw.rect(self.SCREEN, (0, 0, 255), rect)
+                
+            if self.isHoldingLeft:
+                self.rect.centerx -= int(self.move_speed * deltaTime)
+            elif self.isHoldingRight:
+                self.rect.centerx += int(self.move_speed * deltaTime)
+                
+            
+        
+        
+
+    
+    def Render(self):
+
+        frame = self.GetActiveFrame()
+        rect = frame.get_rect()
+        rect.center = self.rect.center
+        
+        if self.direction == 'right':
+            rect.centerx += 10
+        else:
+            rect.centerx -= 10
+            
+        rect.centery -= 10
+        
+        #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
         #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
         self.SCREEN.blit(frame, rect)
-       
             
         
     def GetActiveFrame(self) -> pygame.Rect:
@@ -336,165 +503,33 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if self.direction == 'right':
                 return self.dash_right[int(self.frameIndex)]
             return self.dash_left[int(self.frameIndex)]
-
         
-    
-        
-    def GetEvent(self, events : list):
-        time = pygame.time.get_ticks()
-        
-        for event in events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
-        
-        keystate = pygame.key.get_pressed()
-        
-        moving = False
-        self.isHoldingLeft = False
-        self.isHoldingRight = False
-        if keystate[pygame.K_RIGHT]:
-            moving = True
-            self.isHoldingRight = True
-            if not self.fainting and not self.attacking:
-                self.direction = 'right' 
-            self.ChangeStatus('move')
-        
-        if keystate[pygame.K_LEFT]:
-            moving = True
-            self.isHoldingLeft = True
-            if not self.fainting and not self.attacking:
-                self.direction = 'left' 
-            self.ChangeStatus('move')
-            
-        if keystate[pygame.K_x]:
-            moving = True
-            r = random.randint(0, 10)
-            if r > 3:
-                self.ChangeStatus('attack')
-            else:
-                self.ChangeStatus('attack_2')
-            
-        if keystate[pygame.K_z]:
-            moving = True
-            self.ChangeStatus('quick_move')
-        
-        if keystate[pygame.K_UP]:
-            moving = True
-            self.ChangeStatus('jump')
-            
-        if keystate[pygame.K_c]:
-            moving = True
-            self.ChangeStatus('dash')
-        
-        """
-        Update later: hanging, slipping, onground, climbing
-        """
-        
-        if keystate[pygame.K_f]:
-            moving = True
-            self.faint_time = time
-            self.ChangeStatus('faint', time)
-        
-        if self.fainting == True:
-
-            if time - self.faint_time > self.faint_delay:
-                self.fainting = False
-                self.ChangeStatus('stand_up')
-        
-        if not moving:
-            self.ChangeStatus('stand')
-        
-    def ChangeStatus(self, status : str, time = pygame.time.get_ticks()):
-        if self.status == status:
-            return
-        
-        if self.attacking_2:
-            return
-        
-        if self.attacking:
-            return
-        
-        if self.stand_up:
-            return
-        
-        if self.quick_moving:
-            if status == 'fall':
-                self.quick_moving = False
-            else:
-                return
-        
-        if self.fainting:
-            return
-        
-        if self.dashing:
-            if status == 'fall':
-                self.dashing = False
-            else:
-                return
-        
-        if self.jumping:
-            #check xem có chạm đất k ở đây
-            #if self.IsOnGround:
-                #self.jumping = False
-            #else
-                return
-        if self.falling:
-            return
-        
-        self.frameIndex = 0
-        self.status = status
-        
-        if status == 'move':
-            self.currentFrameNums = self.action_num_frames['move']
-            
-        elif status =='stand':
-            self.currentFrameNums = self.action_num_frames['stand']
-            
-        elif status == 'attack':
-            self.attacking = True
+        elif self.status == 'hanging':
             if self.direction == 'right':
-                self.rect.centerx += 30
+                return self.hanging_right[int(self.frameIndex)]
+            return self.hanging_left[int(self.frameIndex)]
+        
+    def IsColliding(self, block):
+        
+        rect = block[1]
+        if self.rect.colliderect(rect):
+            
+            if self.rect.y + self.rect.h >= rect.y and self.rect.y + self.rect.h <= rect.y  + 10:
+                return True, 'On'
+
+            elif self.rect.y - (rect.y + rect.h) > -10:
+               
+                return True, 'Down'
+            
             else:
-                self.rect.centerx -= 50
-            self.currentFrameNums = self.action_num_frames['attack']
-            
-        elif status == 'jump':
-            self.jumping = True
-            self.jump_speed = 400
-            self.currentFrameNums = self.action_num_frames['jump']   
-            
-        elif status == 'fall':
-            self.falling = True
-            self.currentFrameNums = self.action_num_frames['fall']
-             
-        elif status == 'faint':
-            self.fainting = True
-            self.currentFrameNums = self.action_num_frames['faint']
-            
-        elif status == 'stand_up':
-            self.stand_up = True
-            self.currentFrameNums = self.action_num_frames['stand_up']
-            
-        elif self.status == 'quick_move':
-            self.quick_moving = True
-            self.currentFrameNums = self.action_num_frames['quick_move']
-            
-        elif self.status == 'attack_2':
-            self.attacking_2 = True
-            if self.direction == 'right':
-                self.rect.centerx += 30
-            else:
-                self.rect.centerx -= 50
-            self.currentFrameNums = self.action_num_frames['attack_2']
-            
-        elif self.status == 'dash':
-            self.dashing = True
-            self.currentFrameNums = self.action_num_frames['dash']
+               
+                if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x + 10:
+                    return True, 'Left'
+  
+                if self.rect.x <= rect.x + rect.w:
+                   
+                    return True, 'Right'
+
+        return False, None
 
         
-    def IsColliding(self, ground : pygame.surface.Surface) -> (bool, str):
-        if pygame.Rect.colliderect(self.rect, ground) and self.rect.y + self.rect.h - 10 <= ground.y \
-            and self.rect.x + self.rect.w - 10 > ground.x and self.rect.x < ground.x + ground.w - 10:
-                return (True, 'On')
-        
-        return (False, None)

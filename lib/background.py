@@ -18,10 +18,10 @@ class Ground(pygame.sprite.Sprite):
         self.long_y_ground = self.spritesheet_ground.image_at((0, 255, 35, 100), -1) #7
         self.long_x_ground = self.spritesheet_ground.image_at((0, 385, 95, 35), -1) #8
         self.wall_hole = self.spritesheet_ground.image_at((0, 125, 100, 100), -1) #9
-        #self.wall = self.spritesheet_ground.image_at((330, 180, 100, 100)) #10
+        self.wall = self.spritesheet_ground.image_at((330, 180, 100, 100)) #10
         
         self.ground_list = [self.big_ground, self.medium_ground, self.medium_y_ground, self.medium_x_ground,\
-            self.small_ground, self.abnormal_ground, self.long_y_ground, self.long_x_ground, self.wall_hole]
+            self.small_ground, self.abnormal_ground, self.long_y_ground, self.long_x_ground, self.wall_hole, self.wall]
         
         
         self.tile_map = []
@@ -36,21 +36,23 @@ class Ground(pygame.sprite.Sprite):
         
         self.map = []
         rect = pygame.Rect(0, 0, 0, 0)
+        i = 0
         for y in range(len(self.tile_map)):
-
             for x in range(len(self.tile_map[y])):
                 tile = self.tile_map[y][x]
                 if tile == 0:
                     rect.x += 100
                 else:
+                    checked = None
                     gr_rect = self.ground_list[tile - 1].get_rect()
                     rect.h  = gr_rect.h
                     rect.w = gr_rect.w
-                    self.map += [(self.ground_list[tile-1], pygame.Rect(rect))]
+                    self.map += [(self.ground_list[tile-1], pygame.Rect(rect), i, checked)]
                     rect.x += gr_rect.w - 8
+                i += 1
 
             rect.x = 0
-            rect.y += 100
+            rect.y += 50
 
 
             
@@ -58,6 +60,6 @@ class Ground(pygame.sprite.Sprite):
     def Update(self):
         
         for i in range(len(self.map)):
-            if len(self.map[i]) == 2:
+            if len(self.map[i]) == 4:
                 self.SCREEN.blit(self.map[i][0], self.map[i][1])
                 #pygame.draw.rect(self.SCREEN, (255, 0, 0), self.map[i][1])
