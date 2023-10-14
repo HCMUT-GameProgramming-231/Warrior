@@ -36,8 +36,6 @@ class Processor:
     def Intergrate(self, deltaTime):
         
         falling = True
-        collideLeft = False
-        collideRight = False
         for gr in self.ground.map:
             
             if abs(gr[1].x - self.warrior.rect.x) > 100: continue
@@ -50,38 +48,63 @@ class Processor:
                 if ret:
                     falling = False
                     if pos == 'On':
+                        if gr[-1] == 9 or gr[-1] == 10: continue
                         self.warrior.rect.bottom = gr[1].top
                         self.warrior.rect.y += 2
                         self.warrior.falling = False
-                        pass
+                        if self.warrior.slipping:
+                            self.warrior.slipping = False
+                            if self.warrior.direction == 'right':
+                                self.warrior.rect.x += 2
+                            else: 
+                                self.warrior.rect.x -= 2
+                        
+                        break
                     
                     elif pos == 'Left':
-                        collideLeft = True
-                        self.warrior.collide_left = True
-                        self.warrior.move_speed = 0
-                        self.warrior.dash_speed = 0
+                        if self.warrior.slipping : continue
+                        self.warrior.rect.right = gr[1].left
+
+
                         
                     elif pos == 'Right':
-                        collideRight = True
-                        self.warrior.collide_right = True
-                        self.warrior.move_speed = 0
-                        self.warrior.dash_speed = 0
+                        if self.warrior.slipping : continue
+                        self.warrior.rect.left = gr[1].right
+
+
                     
                     elif pos == 'Down':
+                        if self.warrior.slipping: continue
                         self.warrior.jumping = False
                         self.warrior.ChangeStatus('fall')
                         
                     elif pos == 'TopLeft' or pos == 'TopRight':
+                        if gr[-1] == 10 or gr[-1] == 9: continue
+
+                        if pos == 'TopLeft':
+                            self.warrior.rect.right = gr[1].left
+                        else:
+                            self.warrior.rect.left = gr[1].right
+                        self.warrior.rect.top = gr[1].top
+                        self.warrior.rect.y += 5
                         self.warrior.ChangeStatus('hanging')
 
+
+                    elif pos == 'SlipLeft' or pos == 'SlipRight':
+                        if self.warrior.slipping : continue
+                        if self.warrior.standing : continue
+                        if pos == 'SlipLeft':
+                             self.warrior.rect.right = gr[1].left
+                             self.warrior.rect.x += 1
+                        else:
+                             self.warrior.rect.left = gr[1].right
+                             self.warrior.rect.x -= 1
+                        self.warrior.falling = False
+                        self.warrior.ChangeStatus('slip')
+                    
         
         if falling:
             self.warrior.ChangeStatus('fall')
-            
-        if not collideLeft:
-            self.warrior.collide_left = False
-        
-        if not collideRight:
-            self.warrior.collide_right = False
+
         
         self.warrior.Intergrate(deltaTime)

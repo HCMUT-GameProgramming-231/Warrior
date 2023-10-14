@@ -6,3 +6,5 @@
  - z to quick move
  - x to attack
  - c to dash
+ - up arrow to jump when slip on wall
+ - down arrow to fall when hanging

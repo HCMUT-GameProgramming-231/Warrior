@@ -153,7 +153,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.faint_delay = 1300
         self.faint_time = 0
         self.fainting = False
-        
+        self.standing = False
         self.hanging = False
         
         self.stand_up = False
@@ -162,13 +162,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         self.dashing = False
         self.attacking_2 = False
+        self.slipping = False
         
         self.direction = 'right'
         
         self.collide_left = False
         self.collide_right = False
         #w = 70 if attacking else 35
-        self.rect = pygame.Rect(0, 0, 20, 90)
+        self.rect = pygame.Rect(0, 0, 20, 80)
         self.rect.center = (100, 450)
 
         #speed
@@ -176,6 +177,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.quick_move_speed = 300
         self.dash_speed = 300
         self.jump_speed = 400
+        self.slip_speed = 150
+        
+        self.jump_delay = 1000
         
         self.isHoldingLeft = False
         self.isHoldingRight = False
@@ -185,6 +189,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.DELTA = 0.01
         self.currentFrameTime = 0
 
+        
         #self.lastState = None
         self.accumulator = 0
     
@@ -194,26 +199,28 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if event.type == pygame.QUIT:
                 pygame.quit()
         
-        standing = True
+        self.standing = True
         self.isHoldingLeft = False
         self.isHoldingRight = False
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_RIGHT]:
-            standing = False
-            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving:
+            self.standing = False
+            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
+                and not self.slipping:
                 self.direction = 'right' 
                 self.isHoldingRight = True
             self.ChangeStatus('move')
         
         if keystate[pygame.K_LEFT]:
-            standing = False
-            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving:
+            self.standing = False
+            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
+                and not self.slipping:
                 self.direction = 'left' 
                 self.isHoldingLeft = True
             self.ChangeStatus('move')
         
         if keystate[pygame.K_x]:
-            standing = False
+            self.standing = False
             i = random.randint(1, 10)
             if i < 4:
                 self.ChangeStatus('attack_2')
@@ -221,35 +228,39 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.ChangeStatus('attack')
                 
         if keystate[pygame.K_z]:
-            standing = False
+            self.standing = False
             self.ChangeStatus('quick_move')
         
         if keystate[pygame.K_c]:
-            standing = False
+            self.standing = False
             self.ChangeStatus('dash')
         
         if keystate[pygame.K_UP]:
-            standing = False
+            self.standing = False
             self.ChangeStatus('jump')
         
         if keystate[pygame.K_q]:
-            standing = False
+            self.standing = False
             self.ChangeStatus('fall')
         
         if keystate[pygame.K_f]:
-            standing = False
+            self.standing = False
             self.faint_time = pygame.time.get_ticks()
             self.ChangeStatus('faint')
         
-        if keystate[pygame.K_h]:
-            standing = False
-            self.ChangeStatus('hanging')
+        if keystate[pygame.K_DOWN]:
+            self.standing =False
+            self.hanging = False
+            self.ChangeStatus('fall')
         
-        if standing:
+        if self.standing :
             self.ChangeStatus('stand')
     
     def ChangeStatus(self, status):
         if self.status == status:
+            return
+
+        if status == 'slip' and (self.status == 'move' or self.status == 'stand' or self.attacking or self.attacking_2 or self.fainting):
             return
         
         if self.attacking or self.attacking_2:
@@ -263,6 +274,17 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if status != 'fall':
                 return
         
+        if self.slipping:
+            if status == 'fall' or status == 'jump':
+                self.slipping = False
+                if self.direction == 'right':
+                    self.rect.x += 2
+                else:
+                    self.rect.x -= 2
+            else:
+                return
+        
+        
         if self.jumping:
                 return
         
@@ -271,7 +293,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.falling = False
             else:
                 return
-        
+
         if self.fainting:
             return
         
@@ -280,6 +302,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         if self.hanging:
             if status == 'jump':
+                self.rect.y -= 10
                 self.hanging = False
             else:
                 return       
@@ -324,6 +347,10 @@ class WarriorAnimation(pygame.sprite.Sprite):
         elif status == 'hanging':
             self.hanging = True
             self.currentFrameNums = self.action_num_frames['hanging']
+        elif status == 'slip':
+            self.slipping = True
+            self.direction = 'right' if self.direction == 'left' else 'left'
+            self.currentFrameNums = self.action_num_frames['slip']
     
     def Update(self, fps):
         newTime = pygame.time.get_ticks()
@@ -334,6 +361,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if self.attacking_2:
                 self.frameIndex += 1.75 / frames_per_sprite
             elif self.jumping or self.falling:
+                self.frameIndex += 2 / frames_per_sprite
+            elif self.slipping:
                 self.frameIndex += 3 / frames_per_sprite
             else:
                 self.frameIndex += 2 / frames_per_sprite
@@ -372,6 +401,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
                     self.fainting = False
                     standing = False
                     self.ChangeStatus('stand_up')
+            
+            elif self.status == 'move':
+                standing = False
                     
             elif self.stand_up:
                 self.stand_up = False
@@ -399,20 +431,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         self.timeFromBeginning += self.DELTA
         self.currentFrameTime += self.DELTA
-        
-        if not self.collide_left and not self.collide_right:
-            self.move_speed = 200
-            self.dash_speed = 300
-        
-        if self.collide_left == True:
-            if self.direction == 'left':
-                self.move_speed = 200
-                self.dash_speed = 300
-                
-        if self.collide_right == True:
-            if self.direction == 'right':
-                self.move_speed = 200
-                self.dash_speed = 300
+
         
         if self.status == 'move' or self.status == 'dash' or self.status == 'quick_move':
             speed = self.move_speed if self.status == 'move' else self.dash_speed
@@ -447,6 +466,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.rect.centerx -= int(self.move_speed * deltaTime)
             elif self.isHoldingRight:
                 self.rect.centerx += int(self.move_speed * deltaTime)
+        
+        if self.status == 'slip':
+             self.rect.centery += int(self.slip_speed * deltaTime)
                 
             
         
@@ -459,15 +481,23 @@ class WarriorAnimation(pygame.sprite.Sprite):
         rect = frame.get_rect()
         rect.center = self.rect.center
         
+        
+        
         if self.direction == 'right':
-            rect.centerx += 10
+            if self.slipping:
+                rect.centerx -= 15
+            else:
+                rect.centerx += 10
         else:
-            rect.centerx -= 10
+            if self.slipping:
+                rect.centerx += 12
+            else:
+                rect.centerx -= 10
             
         rect.centery -= 10
         
         #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
-        pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
+        #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
         self.SCREEN.blit(frame, rect)
             
         
@@ -528,6 +558,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 return self.hanging_right[int(self.frameIndex)]
             return self.hanging_left[int(self.frameIndex)]
         
+        elif self.status == 'slip':
+            if self.direction == 'right':
+                return self.slip_left[int(self.frameIndex)]
+            return self.slip_right[int(self.frameIndex)]
+        
     def IsColliding(self, block):
         
         rect = block[1]
@@ -542,16 +577,26 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
             else:
                
-                if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x + 10:
-                    print (abs(self.rect.y - rect.y))
-                    if abs(self.rect.y - rect.y) <= 5:
+                if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x:
+                    if block[-1] == 9 or block[-1] == 10:
+                        #print (self.rect.y - rect.y)
+                        if self.rect.y - rect.y >= 0:
+                            return True, 'SlipLeft'
+                    
+                   # print (abs(self.rect.y - rect.y))
+                    if abs(self.rect.y - rect.y) <= 5 and block[-1] != 9 and block[-1] != 10 :
                         return True, 'TopLeft'
                     return True, 'Left'
   
-                if self.rect.x <= rect.x + rect.w:
+                if self.rect.x <= rect.x + rect.w + 10:
+                    if block[-1] == 9 or block[-1] == 10:
+                         if self.rect.y - rect.y >= 0:
+                            return True, 'SlipRight'
+                        
                     if abs(self.rect.y - rect.y) <= 5:
                        return True, 'TopRight'
                     return True, 'Right'
+        
 
         return False, None
 

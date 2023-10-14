@@ -8,7 +8,7 @@ class Ground(pygame.sprite.Sprite):
         #ground
         self.spritesheet_ground = spritesheet('./Assets/Background/TX Tileset Ground.png')
         
-        self.big_ground = self.spritesheet_ground.image_at((0, 0, 100, 100), -1) #1
+        self.big_ground = self.spritesheet_ground.image_at((0, 0, 95, 100), -1) #1
         #self.big_ground = pygame.transform.scale(self.big_ground, (00, 100)) 
         self.medium_ground = self.spritesheet_ground.image_at((127, 0, 65, 70), -1) #2
         self.medium_y_ground = self.spritesheet_ground.image_at((225, 0, 35, 70), -1) #3
@@ -43,11 +43,10 @@ class Ground(pygame.sprite.Sprite):
                 if tile == 0:
                     rect.x += 100
                 else:
-                    checked = None
                     gr_rect = self.ground_list[tile - 1].get_rect()
                     rect.h  = gr_rect.h
                     rect.w = gr_rect.w
-                    self.map += [(self.ground_list[tile-1], pygame.Rect(rect), i, checked)]
+                    self.map += [(self.ground_list[tile-1], pygame.Rect(rect), i, tile)]
                     rect.x += gr_rect.w - 8
                 i += 1
 
