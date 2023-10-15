@@ -191,7 +191,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.DELTA = 0.01
         self.currentFrameTime = 0
 
-        
+        self.background_moving = False
         #self.lastState = None
         self.accumulator = 0
     
@@ -281,11 +281,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if status == 'fall' or status == 'jump':
                 self.slipping = False
                 if self.direction == 'right':
-                    self.rect.x += 2
+                    self.rect.x += 15
                     self.jump_when_slip_time_right = pygame.time.get_ticks()
                 else:
                     self.jump_when_slip_time_left = pygame.time.get_ticks()
-                    self.rect.x -= 2
+                    self.rect.x -= 15
             else:
                 return
         

@@ -57,8 +57,15 @@ class Ground(pygame.sprite.Sprite):
             
         
     def Update(self):
-        
         for i in range(len(self.map)):
             if len(self.map[i]) == 4:
+                #if self.map[i][-2] == 98: print(self.map[i][-2], self.map[i][1])
                 self.SCREEN.blit(self.map[i][0], self.map[i][1])
                 #pygame.draw.rect(self.SCREEN, (255, 0, 0), self.map[i][1])
+                
+    def Move(self, x, y, deltaTime):
+        for i in range(len(self.map)):
+            if len(self.map[i]) == 4:
+                self.map[i][1].move_ip(x * 200 * deltaTime, y)
+                
+        
