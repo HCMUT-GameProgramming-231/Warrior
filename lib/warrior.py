@@ -208,7 +208,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_RIGHT]:
             self.standing = False
-            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
+            if not self.fainting and not self.attacking and not self.attacking_2 and not self.hanging and not self.dashing and not self.quick_moving\
                 and not self.slipping and time - self.jump_when_slip_time_left > 500:
                 self.direction = 'right' 
                 self.isHoldingRight = True
@@ -216,7 +216,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         if keystate[pygame.K_LEFT]:
             self.standing = False
-            if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
+            if not self.fainting and not self.attacking and not self.attacking_2 and not self.hanging and not self.dashing and not self.quick_moving\
                 and not self.slipping and time - self.jump_when_slip_time_right > 500:
                 self.direction = 'left' 
                 self.isHoldingLeft = True

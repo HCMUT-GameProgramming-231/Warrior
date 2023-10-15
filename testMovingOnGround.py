@@ -4,16 +4,16 @@ import pygame
 pygame.init()
 
 SCREEN = pygame.display.set_mode((1500, 750))
-bg = background.Ground(SCREEN)
+gr = background.Ground(SCREEN)
 w = warrior.WarriorAnimation(SCREEN)
 cam = camera.Camera(1500/ 2, 750 / 2, 5000, 750)
-proc = processor.Processor(w, bg, cam)
+proc = processor.Processor(w, gr, cam)
 
 clock = pygame.time.Clock()
 
 #test animation
 while True:
-    SCREEN.fill((180, 105, 150))
+    SCREEN.fill('#152238')
     
     ev = pygame.event.get()
     

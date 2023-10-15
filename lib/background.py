@@ -17,8 +17,8 @@ class Ground(pygame.sprite.Sprite):
         self.abnormal_ground = self.spritesheet_ground.image_at((390, 0, 55, 70), -1) #6
         self.long_y_ground = self.spritesheet_ground.image_at((0, 255, 35, 100), -1) #7
         self.long_x_ground = self.spritesheet_ground.image_at((0, 385, 95, 35), -1) #8
-        self.wall_hole = self.spritesheet_ground.image_at((0, 125, 100, 100), -1) #9
-        self.wall = self.spritesheet_ground.image_at((330, 180, 100, 100)) #10
+        self.wall_hole = self.spritesheet_ground.image_at((0, 125, 95, 100), -1) #9
+        self.wall = self.spritesheet_ground.image_at((330, 180, 95, 100)) #10
         
         self.ground_list = [self.big_ground, self.medium_ground, self.medium_y_ground, self.medium_x_ground,\
             self.small_ground, self.abnormal_ground, self.long_y_ground, self.long_x_ground, self.wall_hole, self.wall]
@@ -31,7 +31,7 @@ class Ground(pygame.sprite.Sprite):
             if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
             line = line.replace('\n', '')
             elements = line.split(' ')
-            self.tile_map += [[int(ele) for ele in elements]]
+            self.tile_map += [[int(ele) for ele in elements if ele != '']]
         tile_map.close()
         
         self.map = []
@@ -41,13 +41,14 @@ class Ground(pygame.sprite.Sprite):
             for x in range(len(self.tile_map[y])):
                 tile = self.tile_map[y][x]
                 if tile == 0:
-                    rect.x += 100
+                    rect.x += 95
                 else:
                     gr_rect = self.ground_list[tile - 1].get_rect()
+                    if tile == 10:  print(gr_rect.w)
                     rect.h  = gr_rect.h
                     rect.w = gr_rect.w
                     self.map += [(self.ground_list[tile-1], pygame.Rect(rect), i, tile)]
-                    rect.x += gr_rect.w - 8
+                    rect.x += 95
                 i += 1
 
             rect.x = 0
@@ -57,15 +58,12 @@ class Ground(pygame.sprite.Sprite):
             
         
     def Update(self):
-        for i in range(len(self.map)):
-            if len(self.map[i]) == 4:
-                #if self.map[i][-2] == 98: print(self.map[i][-2], self.map[i][1])
-                self.SCREEN.blit(self.map[i][0], self.map[i][1])
+        for gr in self.map:
+            #if self.map[i][-2] == 98: print(self.map[i][-2], self.map[i][1])
+            self.SCREEN.blit(gr[0], gr[1])
                 #pygame.draw.rect(self.SCREEN, (255, 0, 0), self.map[i][1])
                 
-    def Move(self, x, y, deltaTime):
+    def Move(self, x, y):
         for i in range(len(self.map)):
-            if len(self.map[i]) == 4:
-                self.map[i][1].move_ip(x * 200 * deltaTime, y)
+            self.map[i][1].move_ip(x, y)
                 
-        

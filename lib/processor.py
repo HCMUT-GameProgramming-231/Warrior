@@ -45,69 +45,68 @@ class Processor:
             
             if abs(gr[1].x - self.warrior.rect.x) > 100: continue
             if abs(gr[1].y - self.warrior.rect.y) > 100: continue
-        
-            
-            if len(gr) == 4:
+
+
                 
-                ret, pos = self.warrior.IsColliding(gr)
-                if ret:
-                    falling = False
-                    if pos == 'On':
-                        if gr[-1] == 9 or gr[-1] == 10: continue
-                        self.warrior.rect.bottom = gr[1].top
-                        self.warrior.rect.y += 2
-                        self.warrior.falling = False
-                        if self.warrior.slipping:
-                            self.warrior.slipping = False
-                            if self.warrior.direction == 'right':
-                                self.warrior.rect.x += 2
-                            else: 
-                                self.warrior.rect.x -= 2
+            ret, pos = self.warrior.IsColliding(gr)
+            if ret:
+                falling = False
+                if pos == 'On':
+                    if gr[-1] == 9 or gr[-1] == 10: continue
+                    self.warrior.rect.bottom = gr[1].top
+                    self.warrior.rect.y += 2
+                    self.warrior.falling = False
+                    if self.warrior.slipping:
+                        self.warrior.slipping = False
+                        if self.warrior.direction == 'right':
+                            self.warrior.rect.x += 2
+                        else: 
+                            self.warrior.rect.x -= 2
                         
-                        break
+                    break
                     
-                    elif pos == 'Left':
-                        if self.warrior.slipping : continue
-                        self.warrior.collide_left = True
-                        self.warrior.rect.right = gr[1].left + 1
+                elif pos == 'Left':
+                    if self.warrior.slipping : continue
+                    self.warrior.collide_left = True
+                    self.warrior.rect.right = gr[1].left + 1
 
 
                         
-                    elif pos == 'Right':
-                        if self.warrior.slipping : continue
-                        self.warrior.collide_right = True
-                        self.warrior.rect.left = gr[1].right -1
+                elif pos == 'Right':
+                    if self.warrior.slipping : continue
+                    self.warrior.collide_right = True
+                    self.warrior.rect.left = gr[1].right -1
 
 
                     
-                    elif pos == 'Down':
-                        if self.warrior.slipping: continue
-                        self.warrior.jumping = False
-                        self.warrior.ChangeStatus('fall')
+                elif pos == 'Down':
+                    if self.warrior.slipping: continue
+                    self.warrior.jumping = False
+                    self.warrior.ChangeStatus('fall')
                         
-                    elif pos == 'TopLeft' or pos == 'TopRight':
-                        if gr[-1] == 10 or gr[-1] == 9: continue
+                elif pos == 'TopLeft' or pos == 'TopRight':
+                    if gr[-1] == 10 or gr[-1] == 9: continue
 
-                        if pos == 'TopLeft':
-                            self.warrior.rect.right = gr[1].left
-                        else:
-                            self.warrior.rect.left = gr[1].right
-                        self.warrior.rect.top = gr[1].top
-                        self.warrior.rect.y += 5
-                        self.warrior.ChangeStatus('hanging')
+                    if pos == 'TopLeft':
+                        self.warrior.rect.right = gr[1].left
+                    else:
+                        self.warrior.rect.left = gr[1].right
+                    self.warrior.rect.top = gr[1].top
+                    self.warrior.rect.y += 5
+                    self.warrior.ChangeStatus('hanging')
 
 
-                    elif pos == 'SlipLeft' or pos == 'SlipRight':
-                        if self.warrior.slipping : continue
-                        if self.warrior.standing : continue
-                        if pos == 'SlipLeft':
-                             self.warrior.rect.right = gr[1].left
-                             self.warrior.rect.x += 1
-                        else:
-                             self.warrior.rect.left = gr[1].right
-                             self.warrior.rect.x -= 1
-                        self.warrior.falling = False
-                        self.warrior.ChangeStatus('slip')
+                elif pos == 'SlipLeft' or pos == 'SlipRight':
+                    if self.warrior.slipping : continue
+                    if self.warrior.standing : continue
+                    if pos == 'SlipLeft':
+                        self.warrior.rect.right = gr[1].left
+                        self.warrior.rect.x += 1
+                    else:
+                        self.warrior.rect.left = gr[1].right
+                        self.warrior.rect.x -= 1
+                    self.warrior.falling = False
+                    self.warrior.ChangeStatus('slip')
                     
         
         if falling:
@@ -123,15 +122,15 @@ class Processor:
                     speed = 300
                 self.warrior.move_speed = 0
                 self.warrior.dash_speed = 0
-                offset_x = self.warrior.rect.centerx - self.cam.pos_x
+                offset_x = int(speed * deltaTime)
                 if (self.warrior.isHoldingRight or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'right') ) and not self.warrior.collide_left:
-                    self.ground.Move(-(int(speed * deltaTime)), 0, deltaTime)
-                    self.cam.begin_pos_x -= int(speed * deltaTime)
+                    self.ground.Move(-offset_x, 0)
+                    self.cam.begin_pos_x -= offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
                 if (self.warrior.isHoldingLeft or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'left')) and not self.warrior.collide_right:
-                    print(self.warrior.rect.centerx, self.cam.begin_pos_x)
-                    self.ground.Move((int(speed * deltaTime)), 0, deltaTime)
-                    self.cam.begin_pos_x += int(speed * deltaTime)
+                    #print(self.warrior.rect.centerx, self.cam.begin_pos_x)
+                    self.ground.Move(offset_x, 0)
+                    self.cam.begin_pos_x += offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
         else:
             self.warrior.move_speed = 200
