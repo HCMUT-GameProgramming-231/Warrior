@@ -170,15 +170,17 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.collide_right = False
         #w = 70 if attacking else 35
         self.rect = pygame.Rect(0, 0, 20, 80)
-        self.rect.center = (100, 450)
+        self.rect.center = (200, 450)
 
         #speed
-        self.move_speed = 200 
+        self.move_speed = 200
         self.quick_move_speed = 300
         self.dash_speed = 300
         self.jump_speed = 400
         self.slip_speed = 150
         
+        self.jump_when_slip_time_left = 0
+        self.jump_when_slip_time_right = 0
         self.jump_delay = 1000
         
         self.isHoldingLeft = False
@@ -202,11 +204,12 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.standing = True
         self.isHoldingLeft = False
         self.isHoldingRight = False
+        time = pygame.time.get_ticks()
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_RIGHT]:
             self.standing = False
             if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
-                and not self.slipping:
+                and not self.slipping and time - self.jump_when_slip_time_left > 500:
                 self.direction = 'right' 
                 self.isHoldingRight = True
             self.ChangeStatus('move')
@@ -214,7 +217,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if keystate[pygame.K_LEFT]:
             self.standing = False
             if not self.fainting and not self.attacking and not self.hanging and not self.dashing and not self.quick_moving\
-                and not self.slipping:
+                and not self.slipping and time - self.jump_when_slip_time_right > 500:
                 self.direction = 'left' 
                 self.isHoldingLeft = True
             self.ChangeStatus('move')
@@ -245,7 +248,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         if keystate[pygame.K_f]:
             self.standing = False
-            self.faint_time = pygame.time.get_ticks()
+            self.faint_time = time
             self.ChangeStatus('faint')
         
         if keystate[pygame.K_DOWN]:
@@ -279,13 +282,18 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.slipping = False
                 if self.direction == 'right':
                     self.rect.x += 2
+                    self.jump_when_slip_time_right = pygame.time.get_ticks()
                 else:
+                    self.jump_when_slip_time_left = pygame.time.get_ticks()
                     self.rect.x -= 2
             else:
                 return
         
         
         if self.jumping:
+            if status == 'slip':
+                self.jumping = False
+            else:
                 return
         
         if self.falling:
