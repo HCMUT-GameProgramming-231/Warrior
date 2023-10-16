@@ -3,6 +3,8 @@ from .warrior import WarriorAnimation
 from .background import Ground
 from .camera import Camera
 from .slime import Slimes, Slime
+
+#tomorrow task: add small delay when jump from slipping
 class Processor:
     
     def __init__(self, warrior : WarriorAnimation, ground : Ground, cam : Camera, slimes : Slimes) -> None:
@@ -69,8 +71,6 @@ class Processor:
                             self.warrior.rect.x += 2
                         else: 
                             self.warrior.rect.x -= 2
-                        
-                    break
                     
                 elif pos == 'Left':
                     if self.warrior.slipping : continue
@@ -108,13 +108,20 @@ class Processor:
 
                 elif pos == 'SlipLeft' or pos == 'SlipRight':
                     if self.warrior.slipping : continue
-                    if self.warrior.standing : continue
-                    if pos == 'SlipLeft':
-                        self.warrior.rect.right = gr[1].left + 1
+                    if self.warrior.standing : 
+                        if pos == 'SlipLeft':
+                             self.warrior.rect.right = gr[1].left - 1
+                        else:
+                            self.warrior.rect.left = gr[1].right + 1
                     else:
-                        self.warrior.rect.left = gr[1].right - 1
-                    self.warrior.falling = False
-                    self.warrior.ChangeStatus('slip')
+                        if pos == 'SlipLeft':
+                            self.warrior.rect.right = gr[1].left + 1
+                            self.warrior.collide_right = True
+                        else:
+                            self.warrior.collide_left = True
+                            self.warrior.rect.left = gr[1].right - 1
+                        self.warrior.falling = False
+                        self.warrior.ChangeStatus('slip')
                     
         
         if falling:

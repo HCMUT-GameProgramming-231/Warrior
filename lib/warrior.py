@@ -181,6 +181,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         self.jump_when_slip_time_left = 0
         self.jump_when_slip_time_right = 0
+        self.jump_when_slipping_time = 0
         self.jump_delay = 1000
         
         self.isHoldingLeft = False
@@ -239,8 +240,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.ChangeStatus('dash')
         
         if keystate[pygame.K_UP]:
-            self.standing = False
-            self.ChangeStatus('jump')
+            if time - self.jump_when_slip_time_left > 100:
+                self.standing = False
+                self.ChangeStatus('jump')
         
         if keystate[pygame.K_q]:
             self.standing = False
@@ -281,11 +283,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if status == 'fall' or status == 'jump':
                 self.slipping = False
                 if self.direction == 'right':
-                    self.rect.x += 15
+                    self.rect.x += 5
                     self.jump_when_slip_time_right = pygame.time.get_ticks()
                 else:
                     self.jump_when_slip_time_left = pygame.time.get_ticks()
-                    self.rect.x -= 15
+                    self.rect.x -= 5
             else:
                 return
         
@@ -357,6 +359,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.currentFrameNums = self.action_num_frames['hanging']
         elif status == 'slip':
             self.slipping = True
+            self.jump_when_slip_time_left = pygame.time.get_ticks()
             self.direction = 'right' if self.direction == 'left' else 'left'
             self.currentFrameNums = self.action_num_frames['slip']
     
