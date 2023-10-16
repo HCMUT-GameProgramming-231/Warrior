@@ -59,7 +59,7 @@ class Processor:
             if ret:
                 falling = False
                 if pos == 'On':
-                    if gr[-1] == 9 or gr[-1] == 10: continue
+                    if gr[-1] == 10 or gr[-1] == 9: continue
                     self.warrior.rect.bottom = gr[1].top
                     self.warrior.rect.y += 2
                     self.warrior.falling = False
@@ -74,15 +74,15 @@ class Processor:
                     
                 elif pos == 'Left':
                     if self.warrior.slipping : continue
-                    self.warrior.collide_left = True
-                    self.warrior.rect.left = gr[1].right - 1
+                    self.warrior.collide_right = True
+                    self.warrior.rect.right = gr[1].left + 1
 
 
                         
                 elif pos == 'Right':
                     if self.warrior.slipping : continue
-                    self.warrior.collide_right = True
-                    self.warrior.rect.right = gr[1].left + 1
+                    self.warrior.collide_left = True
+                    self.warrior.rect.left = gr[1].right - 1
                     
 
 
@@ -94,12 +94,13 @@ class Processor:
                         
                 elif pos == 'TopLeft' or pos == 'TopRight':
                     if gr[-1] == 10 or gr[-1] == 9: continue
+                    if self.warrior.jumping : continue
 
                     if pos == 'TopLeft':
-                        self.warrior.rect.left = gr[1].right
+                        self.warrior.rect.right = gr[1].left
                     else:
                         
-                        self.warrior.rect.right = gr[1].left
+                        self.warrior.rect.left = gr[1].right
                     self.warrior.rect.top = gr[1].top
                     self.warrior.rect.y += 5
                     self.warrior.ChangeStatus('hanging')
@@ -109,9 +110,9 @@ class Processor:
                     if self.warrior.slipping : continue
                     if self.warrior.standing : continue
                     if pos == 'SlipLeft':
-                        self.warrior.rect.left = gr[1].right - 1
-                    else:
                         self.warrior.rect.right = gr[1].left + 1
+                    else:
+                        self.warrior.rect.left = gr[1].right - 1
                     self.warrior.falling = False
                     self.warrior.ChangeStatus('slip')
                     

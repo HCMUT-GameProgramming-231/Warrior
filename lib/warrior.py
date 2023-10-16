@@ -584,28 +584,24 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 return True, 'Down'
             
             else:
-                if rect.right <= self.rect.left + 5:
-
+                if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x:
                     if block[-1] == 9 or block[-1] == 10:
                         #print (self.rect.y - rect.y)
                         if self.rect.y - rect.y >= 0:
                             return True, 'SlipLeft'
-                    
+
                    # print (abs(self.rect.y - rect.y))
-                    if abs(self.rect.y - rect.y) <= 10 :
+                    if abs(self.rect.y - rect.y) <= 5 :
                         return True, 'TopLeft'
-                   
                     return True, 'Left'
-  
-                if self.rect.right >= rect.left - 5:
+
+                if self.rect.x <= rect.x + rect.w + 10:
                     if block[-1] == 9 or block[-1] == 10:
                          if self.rect.y - rect.y >= 0:
                             return True, 'SlipRight'
-                        
-                    if abs(self.rect.y - rect.y) <= 10:
-                       return True, 'TopRight'
 
-                    print(1)
+                    if abs(self.rect.y - rect.y) <= 5:
+                       return True, 'TopRight'
                     return True, 'Right'
         
 

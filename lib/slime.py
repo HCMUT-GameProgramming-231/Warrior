@@ -8,48 +8,66 @@ class Slime:
         self.animation = animation
         self.rect = pygame.Rect(pos, (100, 100))
         self.pos = pos
-        self.status = ['stand','move', 'jump', 'fall']
         self.direction = 'left'
         self.moving = True
         self.jumping = False
         self.falling = False
-        self.current_status = 'move'
+        self.detectWarrior = False
         self.x_lower = pos[0] - 150
         self.x_upper = pos[0] + 150
         self.frameNum = 0
+        self.jump_speed = 200
     
     def GetActiveFrame(self):
-        if self.current_status == 'stand' or self.current_status == 'move':
-            if self.direction == 'left':
-                return self.animation[int(self.frameNum)][1]
-            else:
-                return self.animation[int(self.frameNum)][0]
-        if self.current_status == 'fall':
+        if self.falling:
             if self.direction == 'left':
                 return self.animation[2][1]
             else:
                 return self.animation[2][0]
-        if self.current_status == 'jump':
+        if self.jumping:
             if self.direction == 'left':
                 return self.animation[3][1]
             else:
                 return self.animation[3][0]
+        if self.moving:
+            if self.direction == 'left':
+                return self.animation[int(self.frameNum)][1]
+            else:
+                return self.animation[int(self.frameNum)][0]
             
     def Intergrate(self, deltaTime):
-        print(self.rect.x, self.x_lower)
+
         if self.moving:
             if self.direction == 'left':
                 self.rect.centerx -= 100 * deltaTime
             else:
                 self.rect.centerx += 100 * deltaTime
+        
+        if self.jumping:
+            self.rect.y -= self.jump_speed * deltaTime
+            self.jump_speed -= 600 * deltaTime
+            if self.jump_speed <= 60:
+                self.jump_speed = 0
+                self.jumping = False
+                self.falling = True
+        
+        if self.falling:
+            self.rect.y += self.jump_speed * deltaTime
+            self.jump_speed += 600 * deltaTime
+            if self.jump_speed >= 200:
+                self.jump_speed = 200
+                self.falling = False
+                
+        if not self.falling and not self.jumping and not self.detectWarrior:
             
             if self.rect.x <= self.x_lower:
                 self.direction = 'right'
             elif self.rect.x >= self.x_upper:
                 self.direction = 'left'
+            
                 
     def Update(self): 
-        if self.current_status == 'move' or self.current_status == 'stand':
+        if self.moving:
             self.frameNum += 0.05
             if self.frameNum >= 2:
                 self.frameNum = 0
