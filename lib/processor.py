@@ -109,11 +109,9 @@ class Processor:
                     if self.warrior.slipping : continue
                     if self.warrior.standing : continue
                     if pos == 'SlipLeft':
-                        self.warrior.rect.right = gr[1].left
-                        self.warrior.rect.x += 1
+                        self.warrior.rect.left = gr[1].right - 1
                     else:
-                        self.warrior.rect.left = gr[1].right
-                        self.warrior.rect.x -= 1
+                        self.warrior.rect.right = gr[1].left + 1
                     self.warrior.falling = False
                     self.warrior.ChangeStatus('slip')
                     

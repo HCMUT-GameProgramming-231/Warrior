@@ -6,7 +6,7 @@ import random
 class Slime:
     def __init__(self, animation, pos):
         self.animation = animation
-        self.rect = pygame.Rect(pos, (50, 50))
+        self.rect = pygame.Rect(pos, (100, 100))
         self.pos = pos
         self.status = ['stand','move', 'jump', 'fall']
         self.direction = 'left'
@@ -73,7 +73,7 @@ class Slimes:
                 temp = []
                 for sprite in os.listdir(slime_type):
                     sprite_path = os.path.join(slime_type, sprite)
-                    slime_right = pygame.transform.scale(pygame.image.load(sprite_path), (50, 50))
+                    slime_right = pygame.transform.scale(pygame.image.load(sprite_path), (100, 100))
                     slime_left = pygame.transform.flip(slime_right, True, False)
                     temp += [(slime_right, slime_left)]
                 self.slimes_sprite += [temp]
