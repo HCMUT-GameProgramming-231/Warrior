@@ -2,12 +2,18 @@ import pygame
 from .warrior import WarriorAnimation
 from .background import Ground
 from .camera import Camera
+from .slime import Slimes, Slime
 class Processor:
     
-    def __init__(self, warrior : WarriorAnimation, ground : Ground, cam : Camera) -> None:
+    def __init__(self, warrior : WarriorAnimation, ground : Ground, cam : Camera, slimes : Slimes) -> None:
         self.warrior = warrior
         self.ground = ground
         self.cam = cam
+        self.slimes = slimes
+        
+        slime_pos = [[750, 300]]
+        for pos in slime_pos:
+            self.slimes.Generate(pos)
         
         self.timeFromBeginning = 0
         self.currentTime = 0
@@ -34,6 +40,7 @@ class Processor:
       
         
         self.ground.Update()
+        self.slimes.Update()
         self.warrior.Update(fps)
         
     def Intergrate(self, deltaTime):
@@ -68,14 +75,15 @@ class Processor:
                 elif pos == 'Left':
                     if self.warrior.slipping : continue
                     self.warrior.collide_left = True
-                    self.warrior.rect.right = gr[1].left + 1
+                    self.warrior.rect.left = gr[1].right - 1
 
 
                         
                 elif pos == 'Right':
                     if self.warrior.slipping : continue
                     self.warrior.collide_right = True
-                    self.warrior.rect.left = gr[1].right -1
+                    self.warrior.rect.right = gr[1].left + 1
+                    
 
 
                     
@@ -88,9 +96,10 @@ class Processor:
                     if gr[-1] == 10 or gr[-1] == 9: continue
 
                     if pos == 'TopLeft':
-                        self.warrior.rect.right = gr[1].left
-                    else:
                         self.warrior.rect.left = gr[1].right
+                    else:
+                        
+                        self.warrior.rect.right = gr[1].left
                     self.warrior.rect.top = gr[1].top
                     self.warrior.rect.y += 5
                     self.warrior.ChangeStatus('hanging')
@@ -115,7 +124,7 @@ class Processor:
             self.warrior.ChangeStatus('fall')
 
         self.warrior.Intergrate(deltaTime)
-        
+        self.slimes.Intergrate(deltaTime)
         if self.warrior.rect.centerx > self.cam.begin_pos_x:
                 speed = 200
                 if self.warrior.dashing or self.warrior.quick_moving:
@@ -123,13 +132,15 @@ class Processor:
                 self.warrior.move_speed = 0
                 self.warrior.dash_speed = 0
                 offset_x = int(speed * deltaTime)
-                if (self.warrior.isHoldingRight or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'right') ) and not self.warrior.collide_left:
+                if (self.warrior.isHoldingRight or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'right') ) and not self.warrior.collide_right:
                     self.ground.Move(-offset_x, 0)
+                    self.slimes.Move(-offset_x, 0)
                     self.cam.begin_pos_x -= offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
-                if (self.warrior.isHoldingLeft or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'left')) and not self.warrior.collide_right:
+                if (self.warrior.isHoldingLeft or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'left')) and not self.warrior.collide_left:
                     #print(self.warrior.rect.centerx, self.cam.begin_pos_x)
                     self.ground.Move(offset_x, 0)
+                    self.slimes.Move(offset_x, 0)
                     self.cam.begin_pos_x += offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
         else:

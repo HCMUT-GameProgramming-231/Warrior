@@ -1,4 +1,4 @@
-from lib import background, warrior, processor, camera
+from lib import background, warrior, processor, camera, slime
 import pygame
 
 pygame.init()
@@ -7,7 +7,9 @@ SCREEN = pygame.display.set_mode((1500, 750))
 gr = background.Ground(SCREEN)
 w = warrior.WarriorAnimation(SCREEN)
 cam = camera.Camera(1500/ 2, 750 / 2, 5000, 750)
-proc = processor.Processor(w, gr, cam)
+slime = slime.Slimes(SCREEN)
+proc = processor.Processor(w, gr, cam, slime)
+
 
 clock = pygame.time.Clock()
 

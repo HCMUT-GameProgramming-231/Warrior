@@ -31,7 +31,7 @@ class Ground(pygame.sprite.Sprite):
             if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
             line = line.replace('\n', '')
             elements = line.split(' ')
-            self.tile_map += [[int(ele) for ele in elements if ele != '']]
+            self.tile_map += [[ele for ele in elements if ele != '']]
         tile_map.close()
         
         self.map = []
@@ -39,16 +39,17 @@ class Ground(pygame.sprite.Sprite):
         i = 0
         for y in range(len(self.tile_map)):
             for x in range(len(self.tile_map[y])):
-                tile = self.tile_map[y][x]
+                tile = int(self.tile_map[y][x][0])
                 if tile == 0:
-                    rect.x += 95
+                    num = int(self.tile_map[y][x][2:])
+                    rect.x += 20 * num
                 else:
+                    tile = int(self.tile_map[y][x])
                     gr_rect = self.ground_list[tile - 1].get_rect()
-                    if tile == 10:  print(gr_rect.w)
                     rect.h  = gr_rect.h
                     rect.w = gr_rect.w
                     self.map += [(self.ground_list[tile-1], pygame.Rect(rect), i, tile)]
-                    rect.x += 95
+                    rect.x += gr_rect.w
                 i += 1
 
             rect.x = 0
