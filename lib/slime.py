@@ -7,6 +7,7 @@ class Slime:
     def __init__(self, animation, pos):
         self.animation = animation
         self.rect = pygame.Rect(pos, (100, 100))
+        self.real_rect = pygame.Rect(pos, (70, 40))
         self.pos = pos
         self.direction = 'left'
         self.moving = True
@@ -34,7 +35,28 @@ class Slime:
                 return self.animation[int(self.frameNum)][1]
             else:
                 return self.animation[int(self.frameNum)][0]
+    
+    def IsCollidingWithBlock(self, block):
+        rect = block[1]
+        
+        if abs(self.real_rect.x - rect.x) > 100: return False, None
+        if abs(self.real_rect.y - rect.y) > 100: return False, None
+        
+        if self.real_rect.colliderect(rect):
+            if self.real_rect.y + self.real_rect.h <= rect.y + 20:
+                return True, 'On'
             
+            if self.real_rect.x <= rect.x + rect.w + 10 and self.real_rect.x + self.rect.w >= rect.x + rect.w:
+                return True, 'Left'
+            
+            if self.real_rect.right >= rect.left + 10:
+                return True, 'Right'
+            
+        return False, None
+    
+    def IsCollidingWithWarrior(self, warrior_rect):
+        pass
+    
     def Intergrate(self, deltaTime):
 
         if self.moving:
@@ -46,7 +68,7 @@ class Slime:
         if self.jumping:
             self.rect.y -= self.jump_speed * deltaTime
             self.jump_speed -= 600 * deltaTime
-            if self.jump_speed <= 60:
+            if self.jump_speed <= 0:
                 self.jump_speed = 0
                 self.jumping = False
                 self.falling = True
@@ -56,7 +78,7 @@ class Slime:
             self.jump_speed += 600 * deltaTime
             if self.jump_speed >= 200:
                 self.jump_speed = 200
-                self.falling = False
+
                 
         if not self.falling and not self.jumping and not self.detectWarrior:
             
@@ -64,6 +86,8 @@ class Slime:
                 self.direction = 'right'
             elif self.rect.x >= self.x_upper:
                 self.direction = 'left'
+        
+        self.real_rect.center = self.rect.center
             
                 
     def Update(self): 
@@ -72,11 +96,14 @@ class Slime:
             if self.frameNum >= 2:
                 self.frameNum = 0
                 
+    def UpdatePos(self):
+        self.x_lower = self.pos[0] - 150
+        self.x_upper = self.pos[0] + 150
+                
     def Move(self, x, y):
         self.rect.move_ip(x, y)
         self.pos[0] += x
-        self.x_lower = self.pos[0] - 150
-        self.x_upper = self.pos[0] + 150
+        self.UpdatePos()
         
     
 class Slimes:
@@ -106,6 +133,8 @@ class Slimes:
         for slime in self.slimes:
             slime.Update()
             frame = slime.GetActiveFrame()
+            #pygame.draw.rect(self.screen, (255, 0, 120), slime.rect)
+            #pygame.draw.rect(self.screen, (255, 170, 120), slime.real_rect)
             self.screen.blit(frame, slime.rect)
             
     def Intergrate(self, deltaTime):

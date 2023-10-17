@@ -50,80 +50,101 @@ class Processor:
         falling = True
         self.warrior.collide_left = False
         self.warrior.collide_right = False
+        
+        for slime in self.slimes.slimes:
+            if not slime.jumping:
+                slime.falling = True
+            else:
+                slime.falling = False
+        
         for gr in self.ground.map:
             
-            if abs(gr[1].x - self.warrior.rect.x) > 100: continue
-            if abs(gr[1].y - self.warrior.rect.y) > 100: continue
-
-
+            if abs(gr[1].x - self.warrior.rect.x) < 100 and abs(gr[1].y - self.warrior.rect.y) < 100:  
                 
-            ret, pos = self.warrior.IsColliding(gr)
-            if ret:
-                falling = False
-                if pos == 'On':
-                    if gr[-1] == 10 or gr[-1] == 9: continue
-                    self.warrior.rect.bottom = gr[1].top
-                    self.warrior.rect.y += 2
-                    self.warrior.falling = False
-                    if self.warrior.slipping:
-                        self.warrior.slipping = False
-                        if self.warrior.direction == 'right':
-                            self.warrior.rect.x += 2
-                        else: 
-                            self.warrior.rect.x -= 2
-                    
-                elif pos == 'Left':
-                    if self.warrior.slipping : continue
-                    self.warrior.collide_right = True
-                    self.warrior.rect.right = gr[1].left + 1
-
-
-                        
-                elif pos == 'Right':
-                    if self.warrior.slipping : continue
-                    self.warrior.collide_left = True
-                    self.warrior.rect.left = gr[1].right - 1
-                    
-
-
-                    
-                elif pos == 'Down':
-                    if self.warrior.slipping: continue
-                    self.warrior.jumping = False
-                    self.warrior.ChangeStatus('fall')
-                        
-                elif pos == 'TopLeft' or pos == 'TopRight':
-                    if gr[-1] == 10 or gr[-1] == 9: continue
-                    if self.warrior.jumping : continue
-
-                    if pos == 'TopLeft':
-                        self.warrior.rect.right = gr[1].left
-                    else:
-                        
-                        self.warrior.rect.left = gr[1].right
-                    self.warrior.rect.top = gr[1].top
-                    self.warrior.rect.y += 5
-                    self.warrior.ChangeStatus('hanging')
-
-
-                elif pos == 'SlipLeft' or pos == 'SlipRight':
-                    if self.warrior.slipping : continue
-                    if self.warrior.standing : 
-                        if pos == 'SlipLeft':
-                             self.warrior.rect.right = gr[1].left - 1
-                        else:
-                            self.warrior.rect.left = gr[1].right + 1
-                    else:
-                        if pos == 'SlipLeft':
-                            self.warrior.rect.right = gr[1].left + 1
-                            self.warrior.collide_right = True
-                        else:
-                            self.warrior.collide_left = True
-                            self.warrior.rect.left = gr[1].right - 1
+                ret, pos = self.warrior.IsColliding(gr)
+                if ret:
+                    falling = False
+                    if pos == 'On':
+                        if gr[-1] == 10 or gr[-1] == 9: continue
+                        self.warrior.rect.bottom = gr[1].top
+                        self.warrior.rect.y += 2
                         self.warrior.falling = False
-                        self.warrior.ChangeStatus('slip')
+                        if self.warrior.slipping:
+                            self.warrior.slipping = False
+                            if self.warrior.direction == 'right':
+                                self.warrior.rect.x += 2
+                            else: 
+                                self.warrior.rect.x -= 2
+                        
+                    elif pos == 'Left':
+                        if self.warrior.slipping : continue
+                        self.warrior.collide_right = True
+                        self.warrior.rect.right = gr[1].left + 1
+
+
+                            
+                    elif pos == 'Right':
+                        if self.warrior.slipping : continue
+                        self.warrior.collide_left = True
+                        self.warrior.rect.left = gr[1].right - 1
+                        
+
+
+                        
+                    elif pos == 'Down':
+                        if self.warrior.slipping: continue
+                        self.warrior.jumping = False
+                        self.warrior.ChangeStatus('fall')
+                            
+                    elif pos == 'TopLeft' or pos == 'TopRight':
+                        if gr[-1] == 10 or gr[-1] == 9: continue
+                        if self.warrior.jumping : continue
+
+                        if pos == 'TopLeft':
+                            self.warrior.rect.right = gr[1].left
+                        else:
+                            
+                            self.warrior.rect.left = gr[1].right
+                        self.warrior.rect.top = gr[1].top
+                        self.warrior.rect.y += 5
+                        self.warrior.ChangeStatus('hanging')
+
+
+                    elif pos == 'SlipLeft' or pos == 'SlipRight':
+                        if self.warrior.slipping : continue
+                        if self.warrior.standing : 
+                            if pos == 'SlipLeft':
+                                self.warrior.rect.right = gr[1].left - 1
+                            else:
+                                self.warrior.rect.left = gr[1].right + 1
+                        else:
+                            if pos == 'SlipLeft':
+                                self.warrior.rect.right = gr[1].left + 1
+                                self.warrior.collide_right = True
+                            else:
+                                self.warrior.collide_left = True
+                                self.warrior.rect.left = gr[1].right - 1
+                            self.warrior.falling = False
+                            self.warrior.ChangeStatus('slip')
+            
+            
+            for slime in self.slimes.slimes:
+                ret, pos = slime.IsCollidingWithBlock(gr)
+                if ret:
+                    if pos == 'On':
+                        slime.falling = False
+                        slime.jumping = True
+                        
+                    elif pos == 'Left':
+                        slime.direction = 'right'
+                        slime.pos[0] += 150
                     
-        
+                    elif pos == 'Right': 
+                        slime.direction = 'left'
+                        slime.pos[0] -= 150   
+                        slime.UpdatePos()
+                    
+
         if falling:
             self.warrior.dashing = False
             self.warrior.quick_moving = False
