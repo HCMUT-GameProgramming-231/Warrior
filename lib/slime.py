@@ -11,6 +11,7 @@ class Slime:
         self.pos = pos
         self.direction = 'left'
         self.moving = True
+        self.being_hit = False
         self.jumping = False
         self.falling = False
         self.detectWarrior = False
@@ -39,8 +40,7 @@ class Slime:
     def IsCollidingWithBlock(self, block):
         rect = block[1]
         
-        if abs(self.real_rect.x - rect.x) > 100: return False, None
-        if abs(self.real_rect.y - rect.y) > 100: return False, None
+        if abs(self.real_rect.x - rect.x) > 70: return False, None
         
         if self.real_rect.colliderect(rect):
             if self.real_rect.y + self.real_rect.h <= rect.y + 20:
@@ -59,7 +59,7 @@ class Slime:
     
     def Intergrate(self, deltaTime):
 
-        if self.moving:
+        if self.moving and not self.being_hit:
             if self.direction == 'left':
                 self.rect.centerx -= 100 * deltaTime
             else:
@@ -73,7 +73,7 @@ class Slime:
                 self.jumping = False
                 self.falling = True
         
-        if self.falling:
+        elif self.falling:
             self.rect.y += self.jump_speed * deltaTime
             self.jump_speed += 600 * deltaTime
             if self.jump_speed >= 200:

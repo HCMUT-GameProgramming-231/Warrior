@@ -171,6 +171,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         #w = 70 if attacking else 35
         self.rect = pygame.Rect(0, 0, 20, 80)
         self.rect.center = (200, 450)
+        
+        self.attack_range = pygame.Rect(0, 0, 50, 80)
 
         #speed
         self.move_speed = 200
@@ -253,11 +255,6 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.faint_time = time
             self.ChangeStatus('faint')
         
-        if keystate[pygame.K_DOWN]:
-            self.standing =False
-            self.hanging = False
-            self.ChangeStatus('fall')
-        
         if self.standing :
             self.ChangeStatus('stand')
     
@@ -330,9 +327,19 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.currentFrameNums = self.action_num_frames['stand']
         elif status == 'attack':
             self.attacking = True
+            self.attack_range.top = self.rect.top
+            if self.direction == 'right':
+                self.attack_range.left = self.rect.right
+            else: 
+                self.attack_range.right = self.rect.left
             self.currentFrameNums = self.action_num_frames['attack']
         elif status == 'attack_2':
             self.attacking_2 = True
+            self.attack_range.top = self.rect.top
+            if self.direction == 'right':
+                self.attack_range.left = self.rect.right
+            else: 
+                self.attack_range.right = self.rect.left
             self.currentFrameNums = self.action_num_frames['attack_2']
         elif status == 'quick_move':
             self.quick_moving = True
@@ -509,6 +516,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
         #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
+        if self.attacking or self.attacking_2:
+            pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
         self.SCREEN.blit(frame, rect)
             
         
@@ -587,15 +596,16 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 return True, 'Down'
             
             else:
-                if self.rect.x + self.rect.w >= rect.x and self.rect.x <= rect.x:
+                if self.rect.x + self.rect.w >= rect.x - 10 and self.rect.x <= rect.x:
                     if block[-1] == 9 or block[-1] == 10:
                         #print (self.rect.y - rect.y)
                         if self.rect.y - rect.y >= 0:
                             return True, 'SlipLeft'
 
                    # print (abs(self.rect.y - rect.y))
-                    if abs(self.rect.y - rect.y) <= 5 :
+                    if abs(self.rect.y - rect.y) <= 5 and not self.jumping:
                         return True, 'TopLeft'
+
                     return True, 'Left'
 
                 if self.rect.x <= rect.x + rect.w + 10:
@@ -603,7 +613,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                          if self.rect.y - rect.y >= 0:
                             return True, 'SlipRight'
 
-                    if abs(self.rect.y - rect.y) <= 5:
+                    if abs(self.rect.y - rect.y) <= 5 and not self.jumping:
                        return True, 'TopRight'
                     return True, 'Right'
         
