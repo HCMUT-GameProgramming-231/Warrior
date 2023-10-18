@@ -19,6 +19,19 @@ class Slime:
         self.x_upper = pos[0] + 150
         self.frameNum = 0
         self.jump_speed = 200
+        self.attacked_time = 0
+        self.maxHP = 1000
+        self.curHP = 1000
+        self.back_speed = 100
+        self.being_hit_left = False
+        self.being_hit_right = False
+        self.damage_rect = pygame.Rect(self.real_rect)
+        self.hit_by_dash = False
+        self.hit_by_attack = False
+        self.hit_by_attack_2 = False
+        self.font = pygame.font.SysFont('Comic Sans MS', 25)
+        self.collide_left = False
+        self.collide_right = False
     
     def GetActiveFrame(self):
         if self.falling:
@@ -54,12 +67,66 @@ class Slime:
             
         return False, None
     
+    def IsBeingAttacked(self, attack_range, time, type):
+        pos = self.real_rect.x - attack_range.x
+        if abs(pos) > 50: 
+            return False
+
+        if self.real_rect.colliderect(attack_range):
+            if not self.being_hit and time - self.attacked_time > 0.7:
+                self.attacked_time = time
+                self.being_hit = True
+                self.jumping = True
+                if type == 'dash':
+                    self.back_speed = 400
+                    self.curHP -= 50
+                    self.hit_by_dash = True
+                else: 
+                    self.back_speed = 100
+                    if type == 'attack':
+                        self.curHP -= 100
+                        self.hit_by_attack = True
+                    else:
+                        self.curHP -= 200
+                        self.hit_by_attack_2 = True
+                if attack_range.centerx <= self.real_rect.centerx:
+                    self.direction = 'left'
+                    self.being_hit_left = True
+                else:
+                    self.direction = 'right'
+                    self.being_hit_right = True
+                
+                
+                return True
+        
+        return False
+    
     def IsCollidingWithWarrior(self, warrior_rect):
         pass
     
-    def Intergrate(self, deltaTime):
+    def Intergrate(self, deltaTime, time):
 
-        if self.moving and not self.being_hit:
+        if self.being_hit:
+            self.damage_rect.centery = self.real_rect.centery - 50
+            self.damage_rect.centerx = self.real_rect.centerx + 20
+        
+        if time - self.attacked_time > 0.7:
+            self.being_hit = False
+            self.being_hit_left = False
+            self.being_hit_right = False
+            self.hit_by_attack = False
+            self.hit_by_dash = False
+            self.hit_by_attack_2 = False
+
+            
+        if self.being_hit_left and not self.collide_right:
+            self.rect.centerx += self.back_speed * deltaTime
+        
+        elif self.being_hit_right and not self.collide_left:
+            self.rect.centerx -= self.back_speed * deltaTime    
+        
+            
+        elif self.moving:
             if self.direction == 'left':
                 self.rect.centerx -= 100 * deltaTime
             else:
@@ -95,6 +162,7 @@ class Slime:
             self.frameNum += 0.05
             if self.frameNum >= 2:
                 self.frameNum = 0
+        
                 
     def UpdatePos(self):
         self.x_lower = self.pos[0] - 150
@@ -129,17 +197,23 @@ class Slimes:
         i = random.randint(0, len(self.slimes_sprite) - 3)
         self.slimes.append(Slime(self.slimes_sprite[i], pos))
         
-    def Update(self):
+    def Update(self, time):
         for slime in self.slimes:
             slime.Update()
             frame = slime.GetActiveFrame()
             #pygame.draw.rect(self.screen, (255, 0, 120), slime.rect)
             #pygame.draw.rect(self.screen, (255, 170, 120), slime.real_rect)
+            if slime.being_hit:
+                damage = 50 if slime.hit_by_dash else 100 if slime.hit_by_attack else 200
+                text_surface = slime.font.render(str(damage), False, (255, 0, 0))
+                self.screen.blit(text_surface, slime.damage_rect)
+            HP = pygame.Rect(slime.rect.x + 10, slime.rect.y + 15, slime.curHP/slime.maxHP * 80, 5)
+            pygame.draw.rect(self.screen, (255, 0, 0), HP)
             self.screen.blit(frame, slime.rect)
             
-    def Intergrate(self, deltaTime):
+    def Intergrate(self, deltaTime, time):
         for slime in self.slimes:
-            slime.Intergrate(deltaTime)
+            slime.Intergrate(deltaTime, time)
             
     def Move(self, x, y):
         for slime in self.slimes:

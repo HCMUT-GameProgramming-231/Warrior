@@ -2,6 +2,7 @@ from lib import background, warrior, processor, camera, slime
 import pygame
 
 pygame.init()
+pygame.font.init()
 
 SCREEN = pygame.display.set_mode((1500, 750))
 gr = background.Ground(SCREEN)

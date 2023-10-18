@@ -172,8 +172,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.rect = pygame.Rect(0, 0, 20, 80)
         self.rect.center = (200, 450)
         
-        self.attack_range = pygame.Rect(0, 0, 50, 80)
-
+        self.attack_range = pygame.Rect(0, 0, 40, 80)
+        self.attack_time = 0
         #speed
         self.move_speed = 200
         self.quick_move_speed = 300
@@ -228,6 +228,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if keystate[pygame.K_x]:
             self.standing = False
             i = random.randint(1, 10)
+            self.attack_time = time
             if i < 4:
                 self.ChangeStatus('attack_2')
             else:
@@ -516,8 +517,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
         #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
         #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
-        if self.attacking or self.attacking_2:
-            pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
+        #if self.attacking or self.attacking_2:
+         #  pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
         self.SCREEN.blit(frame, rect)
             
         

@@ -20,7 +20,7 @@ class Processor:
         self.timeFromBeginning = 0
         self.currentTime = 0
         self.DELTA = 0.01
-        self.currentFrameTime = 0
+        #self.currentFrameTime = 0
         self.accumulator = 0
         
     def Update(self, fps, SCREEN):
@@ -36,13 +36,13 @@ class Processor:
             #self.lastState = copy.copy(self)
             self.Intergrate(self.DELTA)
             self.timeFromBeginning += self.DELTA
-            self.currentFrameTime += self.DELTA
+            #self.currentFrameTime += self.DELTA
             self.accumulator -= self.DELTA
         
       
         
         self.ground.Update()
-        self.slimes.Update()
+        self.slimes.Update(self.timeFromBeginning)
         self.warrior.Update(fps)
         
     def Intergrate(self, deltaTime):
@@ -56,6 +56,7 @@ class Processor:
                 slime.falling = True
             else:
                 slime.falling = False
+        
         
         for gr in self.ground.map:
             
@@ -130,6 +131,8 @@ class Processor:
             
             
             for slime in self.slimes.slimes:
+                slime.collide_left = False
+                slime.collide_right = False
                 ret, pos = slime.IsCollidingWithBlock(gr)
                 if ret:
                     if pos == 'On':
@@ -137,14 +140,32 @@ class Processor:
                         #slime.jumping = True
                         
                     elif pos == 'Left':
+                        slime.collide_left = True
                         slime.direction = 'right'
                         slime.pos[0] += 150
                         slime.UpdatePos()
                     
                     elif pos == 'Right': 
+                        slime.collide_right = True
                         slime.direction = 'left'
                         slime.pos[0] -= 150   
                         slime.UpdatePos()
+                
+                if slime.curHP <= 0:
+                    self.slimes.slimes.remove(slime)
+                    continue
+                
+                if self.warrior.attacking or self.warrior.attacking_2 or self.warrior.dashing:
+                    if self.warrior.attacking or self.warrior.attacking_2:      
+                        if pygame.time.get_ticks() - self.warrior.attack_time > 30:  
+                            attack_range = self.warrior.attack_range
+                            type = 'attack' if self.warrior.attacking else 'attack_2' 
+                            slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type)
+                    else:
+                        attack_range = self.warrior.rect
+                        type = 'dash'
+                        slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type)
+                        
                         
                     
 
@@ -154,7 +175,7 @@ class Processor:
             self.warrior.ChangeStatus('fall')
 
         self.warrior.Intergrate(deltaTime)
-        self.slimes.Intergrate(deltaTime)
+        self.slimes.Intergrate(deltaTime, self.timeFromBeginning)
         if self.warrior.rect.centerx > self.cam.begin_pos_x:
                 speed = 200
                 if self.warrior.dashing or self.warrior.quick_moving:
