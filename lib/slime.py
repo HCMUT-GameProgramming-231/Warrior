@@ -32,6 +32,9 @@ class Slime:
         self.font = pygame.font.SysFont('Comic Sans MS', 25)
         self.collide_left = False
         self.collide_right = False
+        self.dead = False
+        self.temp_dead = False
+        self.dead_time = 0
     
     def GetActiveFrame(self):
         if self.falling:
@@ -68,6 +71,8 @@ class Slime:
         return False, None
     
     def IsBeingAttacked(self, attack_range, time, type):
+        if self.temp_dead : return
+        
         pos = self.real_rect.x - attack_range.x
         if abs(pos) > 50: 
             return False
@@ -96,16 +101,23 @@ class Slime:
                     self.direction = 'right'
                     self.being_hit_right = True
                 
-                
+                if self.curHP <= 0:
+                    self.temp_dead = True
+                    self.dead_time = time
                 return True
         
         return False
     
     def IsCollidingWithWarrior(self, warrior_rect):
+        if self.dead: return
         pass
     
     def Intergrate(self, deltaTime, time):
-
+        if self.temp_dead:
+            #print(time - self.dead_time)
+            if time - self.dead_time >= 1: self.dead = True
+            return
+        
         if self.being_hit:
             self.damage_rect.centery = self.real_rect.centery - 50
             self.damage_rect.centerx = self.real_rect.centerx + 20
@@ -203,7 +215,7 @@ class Slimes:
             frame = slime.GetActiveFrame()
             #pygame.draw.rect(self.screen, (255, 0, 120), slime.rect)
             #pygame.draw.rect(self.screen, (255, 170, 120), slime.real_rect)
-            if slime.being_hit:
+            if slime.being_hit and not slime.temp_dead:
                 damage = 50 if slime.hit_by_dash else 100 if slime.hit_by_attack else 200
                 text_surface = slime.font.render(str(damage), False, (255, 0, 0))
                 self.screen.blit(text_surface, slime.damage_rect)

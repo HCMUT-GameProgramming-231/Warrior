@@ -151,7 +151,7 @@ class Processor:
                         slime.pos[0] -= 150   
                         slime.UpdatePos()
                 
-                if slime.curHP <= 0:
+                if slime.dead:
                     self.slimes.slimes.remove(slime)
                     continue
                 
