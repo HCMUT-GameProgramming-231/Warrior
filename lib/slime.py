@@ -383,6 +383,7 @@ class Slimes:
     def Update(self, time):
         for slime in self.slimes:
             slime.Update()
+            if slime.real_rect.right < 0 or slime.real_rect.left > 1500: continue
             frame = slime.GetActiveFrame()
             #pygame.draw.rect(self.screen, (255, 0, 120), slime.rect)
             #pygame.draw.rect(self.screen, (255, 170, 120), slime.real_rect)

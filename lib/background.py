@@ -60,6 +60,7 @@ class Ground(pygame.sprite.Sprite):
         
     def Update(self):
         for gr in self.map:
+            if gr[1].right < 0 or gr[1].left > 1500: continue
             #if self.map[i][-2] == 98: print(self.map[i][-2], self.map[i][1])
             self.SCREEN.blit(gr[0], gr[1])
                 #pygame.draw.rect(self.SCREEN, (255, 0, 0), self.map[i][1])
@@ -113,6 +114,7 @@ class Flame(pygame.sprite.Sprite):
         return self.animation[int(self.frameNum)]
     
     def Update(self):
+        if self.rect.right < 0 or self.rect.left > 1500: return
         frame = self.GetActiveFrame()
         self.screen.blit(frame, self.rect)
         
@@ -191,10 +193,7 @@ class VillageObjects:
         elif type == 11:
              return VillageObject(self.well, pos, self.well.get_size(), screen )
         
-class HiddenItem(pygame.sprite.Sprite):
-    def __init__(self):
-        pass
-    
+
     
         
         

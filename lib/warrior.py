@@ -192,6 +192,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.isHoldingLeft = False
         self.isHoldingRight = False
         
+        self.findHiddenChest = False
+        self.find_time = 0
+        
         self.maxHP = 2000
         self.curHP = 2000
         
@@ -221,8 +224,15 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.standing = True
         self.isHoldingLeft = False
         self.isHoldingRight = False
+        self.findHiddenChest = False
         time = pygame.time.get_ticks()
         keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_g]:
+            print(time - self.find_time)
+            if time - self.find_time > 200:
+                self.find_time = time
+                self.findHiddenChest = True
+        
         if keystate[pygame.K_RIGHT]:
             self.standing = False
             if not self.fainting and not self.attacking and not self.attacking_2 and not self.hanging and not self.dashing and not self.quick_moving\

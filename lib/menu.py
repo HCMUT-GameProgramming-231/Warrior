@@ -12,14 +12,15 @@ class MainMenu(pygame.sprite.Sprite):
 		#buttons
         self.buttons = []
         button_size = (120, 50)
-        self.playButton = Button("game", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/start_button.png")
-        self.creditsButton = Button("setting", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/credits_button.png")
-        self.exitButton = Button("exit", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/exit_button.png")
+        self.playButton = Button("game", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/play.png")
+        self.creditsButton = Button("setting", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/credits.png")
+        self.exitButton = Button("exit", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/exit.png")
+        self.settingButton = Button("setting", pygame.Rect((0, 0), (120, 50)), button_size, "./Assets/Button/setting.png")
 
-        self.buttons += [self.playButton, self.creditsButton, self.exitButton]
+        self.buttons += [self.playButton, self.creditsButton, self.settingButton,self.exitButton]
 		
         i = 0
-        while i < 3:
+        while i < 4:
             self.buttons[i].rect.center = (self.width / 2, self.height / 2)
             self.buttons[i].rect.y += 60*i
             i += 1

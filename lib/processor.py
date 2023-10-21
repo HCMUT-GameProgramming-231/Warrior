@@ -74,7 +74,8 @@ class Processor:
                 #self.currentFrameTime += self.DELTA
                 self.accumulator -= self.DELTA
             
-        
+            for c in self.chests_list:
+                c.Update()
             
             self.ground.Update()
             self.slimes.Update(self.timeFromBeginning)
@@ -93,13 +94,14 @@ class Processor:
             for f in self.flame:
                     f.Update()
                     
-            for c in self.chests_list:
-                c.Update()
+            
                 
-        elif self.state == 'credit':
+        elif self.state == 'credits':
+            self.state = 'menu'
             pygame.mouse.set_visible(True)
             pass
         elif self.state == 'setting':
+            self.state = 'menu'
             pygame.mouse.set_visible(True)
             pass
         
@@ -236,7 +238,9 @@ class Processor:
                             slime.curHP -= slime.damage_taken
                         
                         
-                    
+        if self.warrior.findHiddenChest:
+            for chest in self.chests_list:
+                chest.UnHidden(self.warrior.rect)
 
         if falling:
             self.warrior.dashing = False
@@ -255,12 +259,16 @@ class Processor:
                 if (self.warrior.isHoldingRight or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'right') ) and not self.warrior.collide_right:
                     self.ground.Move(-offset_x, 0)
                     self.slimes.Move(-offset_x, 0)
+                    for c in self.chests_list:
+                        c.Move(-offset_x, 0)
                     self.cam.begin_pos_x -= offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
                 if (self.warrior.isHoldingLeft or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'left')) and not self.warrior.collide_left:
                     #print(self.warrior.rect.centerx, self.cam.begin_pos_x)
                     self.ground.Move(offset_x, 0)
                     self.slimes.Move(offset_x, 0)
+                    for c in self.chests_list:
+                        c.Move(offset_x, 0)
                     self.cam.begin_pos_x += offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
         else:
