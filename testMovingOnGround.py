@@ -1,15 +1,18 @@
-from lib import background, warrior, processor, camera, slime
+from lib import background, warrior, processor, camera, slime, menu
 import pygame
 
 pygame.init()
 pygame.font.init()
+pygame.mixer.init()
+
 
 SCREEN = pygame.display.set_mode((1500, 750))
-gr = background.Ground(SCREEN)
+gr = background.Ground(SCREEN, './Map/map.txt')
 w = warrior.WarriorAnimation(SCREEN)
 cam = camera.Camera(1500/ 2, 750 / 2, 5000, 750)
 slime = slime.Slimes(SCREEN)
-proc = processor.Processor(w, gr, cam, slime)
+menu = menu.MainMenu(SCREEN, 1500, 750)
+proc = processor.Processor(SCREEN, w, gr, cam, slime, menu)
 
 
 clock = pygame.time.Clock()
@@ -18,12 +21,8 @@ clock = pygame.time.Clock()
 while True:
     SCREEN.fill('#152238')
     
-    ev = pygame.event.get()
-    
-    w.GetEvent(ev)
-    
-    proc.Update(60, SCREEN)
+    proc.Update(70, SCREEN)
 
 
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(70)

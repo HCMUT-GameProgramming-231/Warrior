@@ -1,21 +1,50 @@
 import pygame
 from .warrior import WarriorAnimation
-from .background import Ground
+from .background import Ground, Flame
+from .Chest import Chests, Chest
 from .camera import Camera
 from .slime import Slimes, Slime
+from .menu import MainMenu
+
 
 #tomorrow task: add small delay when jump from slipping
 class Processor:
     
-    def __init__(self, warrior : WarriorAnimation, ground : Ground, cam : Camera, slimes : Slimes) -> None:
+    def __init__(self, screen, warrior : WarriorAnimation, ground : Ground, cam : Camera, slimes : Slimes, menu : MainMenu) -> None:
         self.warrior = warrior
         self.ground = ground
         self.cam = cam
         self.slimes = slimes
-        
+        self.menu = menu
+        self.state = 'menu'
+        self.score = 0
+        self.score_rect = pygame.Rect((10, 10, 200, 40))
+        self.font = None
         slime_pos = [[890, 300]]
         for pos in slime_pos:
             self.slimes.Generate(pos)
+        
+        boss_pos = [[2000, 300]]
+        for pos in boss_pos:
+            self.slimes.GenerateBos(pos)
+        
+        self.flame = []
+        flame_pos = open('./Map/flame.txt','r')
+        for i,line in enumerate(flame_pos):
+            if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
+            line = line.replace('\n', '')
+            elements = line.split(' ')
+            self.flame.append(Flame(screen, [int(ele) for ele in elements if ele != '']))
+        flame_pos.close()
+
+        self.chests = Chests()
+        self.chests_list = []
+        chest_pos = open('./Map/chest.txt', 'r')
+        for i, line in enumerate(chest_pos):
+            if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
+            line = line.replace('\n', '')
+            elements = line.split(' ')
+            self.chests_list.append(self.chests.Generate(screen, [int(ele) for ele in elements if ele!= '']))
         
         self.timeFromBeginning = 0
         self.currentTime = 0
@@ -24,26 +53,55 @@ class Processor:
         self.accumulator = 0
         
     def Update(self, fps, SCREEN):
-        newTime = pygame.time.get_ticks()
-        frameTime = (newTime - self.currentTime) / 1000
-        if frameTime  > 1 / fps:
-            frameTime = 1 / fps
+        ev = pygame.event.get()
+        
+        
+        if self.state == 'game':
+            pygame.mouse.set_visible(False)
+            self.warrior.GetEvent(ev)
+            newTime = pygame.time.get_ticks()
+            frameTime = (newTime - self.currentTime) / 1000
+            if frameTime  > 1 / fps:
+                frameTime = 1 / fps
+                
+            self.currentTime = newTime
+            self.accumulator += frameTime
             
-        self.currentTime = newTime
-        self.accumulator += frameTime
+            while self.accumulator >= self.DELTA:
+                #self.lastState = copy.copy(self)
+                self.Intergrate(self.DELTA)
+                self.timeFromBeginning += self.DELTA
+                #self.currentFrameTime += self.DELTA
+                self.accumulator -= self.DELTA
+            
         
-        while self.accumulator >= self.DELTA:
-            #self.lastState = copy.copy(self)
-            self.Intergrate(self.DELTA)
-            self.timeFromBeginning += self.DELTA
-            #self.currentFrameTime += self.DELTA
-            self.accumulator -= self.DELTA
+            
+            self.ground.Update()
+            self.slimes.Update(self.timeFromBeginning)
+                
+            self.warrior.Update(fps)
+            
+            pygame.draw.rect(SCREEN, (255, 0, 0), self.score_rect)
         
-      
-        
-        self.ground.Update()
-        self.slimes.Update(self.timeFromBeginning)
-        self.warrior.Update(fps)
+        elif self.state == 'menu':
+            pygame.mouse.set_visible(True)
+            if not self.menu.playing_music:
+                self.menu.playing_music = True
+                pygame.mixer.music.load('./sound/BG_Music.mp3')
+                pygame.mixer.music.play(-1)
+            self.state = self.menu.Update(ev)
+            for f in self.flame:
+                    f.Update()
+                    
+            for c in self.chests_list:
+                c.Update()
+                
+        elif self.state == 'credit':
+            pygame.mouse.set_visible(True)
+            pass
+        elif self.state == 'setting':
+            pygame.mouse.set_visible(True)
+            pass
         
     def Intergrate(self, deltaTime):
         
@@ -52,6 +110,13 @@ class Processor:
         self.warrior.collide_right = False
         
         for slime in self.slimes.slimes:
+            slime.DetectWarrior(self.warrior.rect)
+            if not slime.temp_dead and self.warrior.IsCollidingWithSlime(slime):
+                self.warrior.faint_time = self.timeFromBeginning * 1000
+                self.warrior.ChangeStatus('faint')
+                self.warrior.curHP -= slime.damage
+                self.warrior.attacked_by = 'slime'
+            
             if not slime.jumping:
                 slime.falling = True
             else:
@@ -160,11 +225,15 @@ class Processor:
                         if pygame.time.get_ticks() - self.warrior.attack_time > 30:  
                             attack_range = self.warrior.attack_range
                             type = 'attack' if self.warrior.attacking else 'attack_2' 
-                            slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type)
+                            if slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type):
+                                slime.damage_taken = self.warrior.attack_damage if type == 'attack' else self.warrior.attack_2_damage
+                                slime.curHP -= slime.damage_taken
                     else:
                         attack_range = self.warrior.rect
                         type = 'dash'
-                        slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type)
+                        if slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type):
+                            slime.damage_taken = self.warrior.dash_damage
+                            slime.curHP -= slime.damage_taken
                         
                         
                     

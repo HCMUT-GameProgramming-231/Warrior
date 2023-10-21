@@ -43,6 +43,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.hanging_left = []
         self.slip_left = []
                 
+        
         #no direction
         self.climb = [] 
         
@@ -145,12 +146,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.attacking = False
         
         self.current_height = 0
-        self.tartget_height = self.current_height + 200
         self.jumping = False
         
         self.falling = False
         
-        self.faint_delay = 1300
+        self.faint_delay = 2700
         self.faint_time = 0
         self.fainting = False
         self.standing = False
@@ -163,6 +163,9 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.dashing = False
         self.attacking_2 = False
         self.slipping = False
+        self.falling_time = 0
+        
+        self.font = pygame.font.SysFont('Comic Sans MS', 20)
         
         self.direction = 'right'
         
@@ -189,6 +192,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.isHoldingLeft = False
         self.isHoldingRight = False
         
+        self.maxHP = 2000
+        self.curHP = 2000
+        
+        self.attacked_by = None
+        
         self.timeFromBeginning = 0
         self.currentTime = 0
         self.DELTA = 0.01
@@ -197,6 +205,12 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.background_moving = False
         #self.lastState = None
         self.accumulator = 0
+        
+        self.attack_damage = 200
+        self.attack_2_damage = 500
+        self.dash_damage = 50
+        
+        self.attack_sound = pygame.mixer.Sound('./sound/sword-sound-1.mp3')
     
     def GetEvent(self, events):
         
@@ -212,7 +226,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if keystate[pygame.K_RIGHT]:
             self.standing = False
             if not self.fainting and not self.attacking and not self.attacking_2 and not self.hanging and not self.dashing and not self.quick_moving\
-                and not self.slipping and time - self.jump_when_slip_time_left > 500:
+                and not self.stand_up and not self.slipping and time - self.jump_when_slip_time_left > 500:
                 self.direction = 'right' 
                 self.isHoldingRight = True
             self.ChangeStatus('move')
@@ -220,7 +234,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if keystate[pygame.K_LEFT]:
             self.standing = False
             if not self.fainting and not self.attacking and not self.attacking_2 and not self.hanging and not self.dashing and not self.quick_moving\
-                and not self.slipping and time - self.jump_when_slip_time_right > 500:
+                and not self.stand_up and not self.slipping and time - self.jump_when_slip_time_right > 500:
                 self.direction = 'left' 
                 self.isHoldingLeft = True
             self.ChangeStatus('move')
@@ -251,10 +265,6 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.standing = False
             self.ChangeStatus('fall')
         
-        if keystate[pygame.K_f]:
-            self.standing = False
-            self.faint_time = time
-            self.ChangeStatus('faint')
         
         if self.standing :
             self.ChangeStatus('stand')
@@ -327,6 +337,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         elif status =='stand':
             self.currentFrameNums = self.action_num_frames['stand']
         elif status == 'attack':
+            pygame.mixer.find_channel(True).play(self.attack_sound)
             self.attacking = True
             self.attack_range.top = self.rect.top
             if self.direction == 'right':
@@ -335,6 +346,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.attack_range.right = self.rect.left
             self.currentFrameNums = self.action_num_frames['attack']
         elif status == 'attack_2':
+            pygame.mixer.find_channel(True).play(self.attack_sound)
             self.attacking_2 = True
             self.attack_range.top = self.rect.top
             if self.direction == 'right':
@@ -353,8 +365,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.jump_speed = 400
             self.currentFrameNums = self.action_num_frames['jump']
         elif status == 'fall':
+            self.falling_time = pygame.time.get_ticks()
             self.falling = True
-            self.jump_speed = 50
             self.currentFrameNums = self.action_num_frames['fall']
         elif status == 'faint':
             self.fainting = True
@@ -419,6 +431,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 if newTime - self.faint_time > self.faint_delay:
                     self.fainting = False
                     standing = False
+                    self.attacked_by = None
                     self.ChangeStatus('stand_up')
             
             elif self.status == 'move':
@@ -519,6 +532,13 @@ class WarriorAnimation(pygame.sprite.Sprite):
         #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
         #if self.attacking or self.attacking_2:
          #  pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
+        HP_rect = pygame.Rect(self.rect.x - 20, self.rect.y - 10, self.curHP / self.maxHP * 60, 5)
+        pygame.draw.rect(self.SCREEN, (255, 0, 0), HP_rect)
+        if self.fainting:
+            damage = 500 if self.attacked_by == 'slime'  else 2000
+            text_surface = self.font.render(str(damage), False, (255, 0, 0))
+            HP_rect.y -= 30
+            self.SCREEN.blit(text_surface, HP_rect)
         self.SCREEN.blit(frame, rect)
             
         
@@ -620,5 +640,16 @@ class WarriorAnimation(pygame.sprite.Sprite):
         
 
         return False, None
+    
+    def IsCollidingWithSlime(self, slime):
+        slime_rect = slime.real_rect
+        if slime.type == 'slime':
+            if abs(self.rect.x - slime_rect.x) > 50 or self.attacking or self.attacking_2 or self.dashing or self.fainting: return False
+            if self.rect.colliderect(slime_rect):
+                return True
+        else:
+            if abs(self.rect.x - slime_rect.x) > 300 or self.attacking or self.attacking_2 or self.dashing or self.fainting: return False
+            if self.rect.colliderect(slime_rect):
+                return True
 
         
