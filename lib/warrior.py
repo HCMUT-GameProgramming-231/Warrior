@@ -214,6 +214,10 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.dash_damage = 50
         
         self.attack_sound = pygame.mixer.Sound('./sound/sword-sound-1.mp3')
+        self.jump_sound = pygame.mixer.Sound('./sound/jump.mp3')
+        
+        self.name = 'HpT'
+        self.font = pygame.font.SysFont('Comic Sans MS', 15)
     
     def GetEvent(self, events):
         
@@ -228,8 +232,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         time = pygame.time.get_ticks()
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_g]:
-            print(time - self.find_time)
-            if time - self.find_time > 200:
+            #print(time - self.find_time)
+            if time - self.find_time > 500:
                 self.find_time = time
                 self.findHiddenChest = True
         
@@ -290,8 +294,11 @@ class WarriorAnimation(pygame.sprite.Sprite):
             return
         
         if self.quick_moving:
-            if status != 'fall':
+            #print(status)
+            if status != 'fall' and status != 'faint':
                 return
+            else:
+                self.quick_moving = False
         
         if self.dashing:
             if status != 'fall':
@@ -371,6 +378,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
             self.dashing = True
             self.currentFrameNums = self.action_num_frames['dash']
         elif status == 'jump':
+            pygame.mixer.find_channel(True).play(self.jump_sound)
             self.jumping = True
             self.jump_speed = 400
             self.currentFrameNums = self.action_num_frames['jump']
@@ -544,10 +552,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
          #  pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
         HP_rect = pygame.Rect(self.rect.x - 20, self.rect.y - 10, self.curHP / self.maxHP * 60, 5)
         pygame.draw.rect(self.SCREEN, (255, 0, 0), HP_rect)
+        HP_rect.y -= 30
+        HP_rect.x += 15
+        name = self.font.render(self.name, False, (255, 255, 255))
+        self.SCREEN.blit(name, HP_rect)
         if self.fainting:
             damage = 500 if self.attacked_by == 'slime'  else 2000
             text_surface = self.font.render(str(damage), False, (255, 0, 0))
-            HP_rect.y -= 30
+            HP_rect.y -= 20
             self.SCREEN.blit(text_surface, HP_rect)
         self.SCREEN.blit(frame, rect)
             

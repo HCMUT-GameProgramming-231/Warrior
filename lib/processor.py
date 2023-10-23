@@ -1,6 +1,6 @@
 import pygame
 from .warrior import WarriorAnimation
-from .background import Ground, Flame
+from .background import Ground, Flame, VillageObjects, VillageObject, Clouds, Cloud
 from .Chest import Chests, Chest
 from .camera import Camera
 from .slime import Slimes, Slime
@@ -10,24 +10,35 @@ from .menu import MainMenu
 #tomorrow task: add small delay when jump from slipping
 class Processor:
     
-    def __init__(self, screen, warrior : WarriorAnimation, ground : Ground, cam : Camera, slimes : Slimes, menu : MainMenu) -> None:
+    def __init__(self, screen, warrior : WarriorAnimation, ground : Ground, cam : Camera, menu : MainMenu) -> None:
         self.warrior = warrior
         self.ground = ground
         self.cam = cam
-        self.slimes = slimes
+        self.slimes = Slimes(screen)
         self.menu = menu
         self.state = 'menu'
-        self.score = 0
-        self.score_rect = pygame.Rect((10, 10, 200, 40))
+        #self.score = 0
+        #self.score_rect = pygame.Rect((10, 10, 200, 40))
         self.font = None
-        slime_pos = [[890, 300]]
+        
+        #slime
+        slime_pos = []
+        slime_map = open('./Map/slime.txt','r')
+        for i,line in enumerate(slime_map):
+            if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
+            line = line.replace('\n', '')
+            elements = line.split(' ')
+            slime_pos.append([int(ele) for ele in elements if ele != ''])
+        slime_map.close()
+        
         for pos in slime_pos:
             self.slimes.Generate(pos)
         
-        boss_pos = [[2000, 300]]
+        boss_pos = [[5750, 300]]
         for pos in boss_pos:
             self.slimes.GenerateBos(pos)
         
+        #flame
         self.flame = []
         flame_pos = open('./Map/flame.txt','r')
         for i,line in enumerate(flame_pos):
@@ -37,6 +48,7 @@ class Processor:
             self.flame.append(Flame(screen, [int(ele) for ele in elements if ele != '']))
         flame_pos.close()
 
+        #chest
         self.chests = Chests()
         self.chests_list = []
         chest_pos = open('./Map/chest.txt', 'r')
@@ -45,6 +57,33 @@ class Processor:
             line = line.replace('\n', '')
             elements = line.split(' ')
             self.chests_list.append(self.chests.Generate(screen, [int(ele) for ele in elements if ele!= '']))
+        
+        #village object
+        vil = VillageObjects()
+        self.vil_obj = []
+
+        obj_pos = open('./Map/villageobject.txt', 'r')
+        for i, line in enumerate(obj_pos):
+            if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
+            line = line.replace('\n', '')
+            elements = line.split(' ')
+            pos = [int(ele) for ele in elements]
+            self.vil_obj += [vil.Generate((pos[0], pos[1]), pos[2], screen)]
+            
+        
+        #cloud
+        clo = Clouds()
+        self.clouds = []
+        
+        cloud_pos = open('./Map/cloud.txt', 'r')
+        for i, line in enumerate(cloud_pos):
+            if line[0] == '#' or line[0] == '' or line[0] == '\n': continue
+            line = line.replace('\n', '')
+            elements = line.split(' ')
+            pos = [int(ele) for ele in elements]
+            self.clouds.append(clo.Generate(pos, screen))
+        
+        self.font = pygame.font.SysFont('Comic Sans MS', 20)
         
         self.timeFromBeginning = 0
         self.currentTime = 0
@@ -74,6 +113,15 @@ class Processor:
                 #self.currentFrameTime += self.DELTA
                 self.accumulator -= self.DELTA
             
+            for f in self.flame:
+                    f.Update()
+            
+            for obj in self.vil_obj:
+                obj.Update()
+                
+            for cloud in self.clouds:
+                cloud.Update()
+            
             for c in self.chests_list:
                 c.Update()
             
@@ -81,8 +129,7 @@ class Processor:
             self.slimes.Update(self.timeFromBeginning)
                 
             self.warrior.Update(fps)
-            
-            pygame.draw.rect(SCREEN, (255, 0, 0), self.score_rect)
+            text = self.font.render(self.warrior.name, False, (255, 255, 255))
         
         elif self.state == 'menu':
             pygame.mouse.set_visible(True)
@@ -90,14 +137,13 @@ class Processor:
                 self.menu.playing_music = True
                 pygame.mixer.music.load('./sound/BG_Music.mp3')
                 pygame.mixer.music.play(-1)
-            self.state = self.menu.Update(ev)
-            for f in self.flame:
-                    f.Update()
-                    
+            self.state = self.menu.Update(ev, self.timeFromBeginning)
+
             
                 
         elif self.state == 'credits':
-            self.state = 'menu'
+            self.menu.RenderBackground(self.timeFromBeginning)
+            self.state = self.menu.Credits.display(ev)
             pygame.mouse.set_visible(True)
             pass
         elif self.state == 'setting':
@@ -117,6 +163,7 @@ class Processor:
                 self.warrior.faint_time = self.timeFromBeginning * 1000
                 self.warrior.ChangeStatus('faint')
                 self.warrior.curHP -= slime.damage
+                if self.warrior.curHP < 0: self.warrior.curHP = 0
                 self.warrior.attacked_by = 'slime'
             
             if not slime.jumping:
@@ -204,6 +251,7 @@ class Processor:
                 if ret:
                     if pos == 'On':
                         slime.falling = False
+                        slime.playsound = False
                         #slime.jumping = True
                         
                     elif pos == 'Left':
@@ -240,7 +288,11 @@ class Processor:
                         
         if self.warrior.findHiddenChest:
             for chest in self.chests_list:
-                chest.UnHidden(self.warrior.rect)
+                if chest.UnHidden(self.warrior.rect):
+                    if chest.item_name == 'potion':
+                        self.warrior.curHP += 100
+                        if self.warrior.curHP > self.warrior.maxHP: self.warrior.curHP = self.warrior.maxHP
+                    
 
         if falling:
             self.warrior.dashing = False
@@ -249,7 +301,7 @@ class Processor:
 
         self.warrior.Intergrate(deltaTime)
         self.slimes.Intergrate(deltaTime, self.timeFromBeginning)
-        if self.warrior.rect.centerx > self.cam.begin_pos_x:
+        if self.warrior.rect.centerx > self.cam.begin_pos_x and self.warrior.rect.x < self.cam.end_pos_x:
                 speed = 200
                 if self.warrior.dashing or self.warrior.quick_moving:
                     speed = 300
@@ -261,7 +313,14 @@ class Processor:
                     self.slimes.Move(-offset_x, 0)
                     for c in self.chests_list:
                         c.Move(-offset_x, 0)
+                    for obj in self.vil_obj:
+                        obj.Move(-offset_x, 0)
+                    for f in self.flame:
+                        f.Move(-offset_x, 0)
+                    for cloud in self.clouds:
+                        cloud.Move(-offset_x, 0)
                     self.cam.begin_pos_x -= offset_x
+                    self.cam.end_pos_x -= offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
                 if (self.warrior.isHoldingLeft or ( (self.warrior.dashing or self.warrior.quick_moving) and self.warrior.direction == 'left')) and not self.warrior.collide_left:
                     #print(self.warrior.rect.centerx, self.cam.begin_pos_x)
@@ -269,7 +328,14 @@ class Processor:
                     self.slimes.Move(offset_x, 0)
                     for c in self.chests_list:
                         c.Move(offset_x, 0)
+                    for obj in self.vil_obj:
+                        obj.Move(offset_x, 0)
+                    for f in self.flame:
+                        f.Move(offset_x, 0)
+                    for cloud in self.clouds:
+                        cloud.Move(offset_x, 0)
                     self.cam.begin_pos_x += offset_x
+                    self.cam.end_pos_x += offset_x
                     self.cam.pos_x = self.warrior.rect.centerx
         else:
             self.warrior.move_speed = 200

@@ -4,7 +4,7 @@ import random
 
 class Chest(pygame.sprite.Sprite):
     
-    def __init__(self, screen, pos, animation, hole, wall, type):
+    def __init__(self, screen, pos, animation, hole, wall, type, item, item_name):
         self.screen = screen
         self.rect = pygame.Rect(pos, (75, 75))
         self.frameNum = 0
@@ -13,6 +13,9 @@ class Chest(pygame.sprite.Sprite):
         self.wall = wall
         self.hole_rect = pygame.Rect(pos, (95, 95))
         
+        self.item = item
+        self.item_name = item_name
+        self.UnHiddenTime = 0
         self.hidden = True
         self.close = True
         
@@ -28,27 +31,47 @@ class Chest(pygame.sprite.Sprite):
         else:
             self.hole_rect.x -= 30
             self.hole_rect.y += 5
-    
+
+        self.item_rect = pygame.Rect((0, 0), (30, 30))
+        self.item_rect.center = self.hole_rect.center
+        self.item_rect.y += 0
+        
     def UnHidden(self, warrior_rect):
-        if abs(self.rect.x - warrior_rect.x) > 50: return
-        if self.rect.colliderect(warrior_rect):
+        if abs(self.hole_rect.x - warrior_rect.x) > 100: return False
+        if self.hole_rect.colliderect(warrior_rect):
             if self.hidden:
                 self.hidden = False
             else:
                 self.close = False
+                self.UnHiddenTime = pygame.time.get_ticks()
+                return True
+        return False
         
     
     def Move(self, x, y):
         self.rect.move_ip(x, y)
         self.hole_rect.move_ip(x, y)
+        self.item_rect.move_ip(x, y)
         
     def Update(self):
         if self.hole_rect.right < 0 or self.rect.left > 1500: return
-        frame = self.GetActiveFrame()
         self.screen.blit(self.hole, self.hole_rect)
+        frame = self.GetActiveFrame()
+        
+
         self.screen.blit(frame, self.rect)
+        
+        if self.frameNum == 4 and pygame.time.get_ticks() - self.UnHiddenTime < 2500:
+                if self.item_rect.centery >= self.hole_rect.centery - 30:
+                    self.item_rect.y -= 1
+                self.screen.blit(self.item, self.item_rect)
+                    
+        
+        
         if self.hidden:
             self.screen.blit(self.wall, self.hole_rect)
+
+        
     
     def GetActiveFrame(self):
         if self.close:
@@ -93,14 +116,17 @@ class Chests:
                 index_x = 0
                 
             i += 1
+            
+        self.potion = pygame.image.load('./Assets/Item/HP_potion.png')
+        self.potion = pygame.transform.scale(self.potion, (30, 30))
     
-    def Generate(self, screen , pos):
-        i = random.randint(0, 3)
+    def Generate(self, screen , pos, i = -1):
+        i = random.randint(0, 3) if i == -1 else i
         if i == 0:
-            return Chest(screen, pos, self.chest_1_animation, self.hole, self.wall, i)
+            return Chest(screen, pos, self.chest_1_animation, self.hole, self.wall, i, self.potion, 'potion')
         elif i == 1:
-            return Chest(screen, pos, self.chest_2_animation, self.hole, self.wall, i)
+            return Chest(screen, pos, self.chest_2_animation, self.hole, self.wall, i, self.potion, 'potion')
         elif i == 2:
-            return Chest(screen, pos, self.chest_3_animation, self.hole, self.wall, i)
+            return Chest(screen, pos, self.chest_3_animation, self.hole, self.wall, i, self.potion, 'potion')
         else:
-            return Chest(screen, pos, self.chest_4_animation, self.hole, self.wall, i)
+            return Chest(screen, pos, self.chest_4_animation, self.hole, self.wall, i, self.potion, 'potion')

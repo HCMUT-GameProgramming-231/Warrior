@@ -1,5 +1,6 @@
 from .spritesheet import spritesheet
 import pygame
+import random
 
 class Ground(pygame.sprite.Sprite):
     
@@ -166,7 +167,8 @@ class VillageObjects:
         #scarecrow
         
         #tree
-        
+        self.tree_1 = self.spritesheet.image_at((690, 445, 140, 175), -1) #12
+        self.tree_2 = self.spritesheet.image_at((830, 445, 160, 170), -1) #13
         #grave
         
     def Generate(self, pos, type, screen):
@@ -192,8 +194,45 @@ class VillageObjects:
             return VillageObject(self.row, pos, self.row.get_size(), screen )
         elif type == 11:
              return VillageObject(self.well, pos, self.well.get_size(), screen )
-        
+        elif type == 12:
+             return VillageObject(self.tree_1, pos, self.tree_1.get_size(), screen )
+        elif type == 13:
+             return VillageObject(self.tree_2, pos, self.tree_2.get_size(), screen ) 
 
+class Cloud(pygame.sprite.Sprite):
+    def __init__(self, pos, sprite, screen):
+        self.screen = screen
+        self.pos_y = pos[1]
+        self.rect = pygame.Rect(pos, (100, 100))
+        self.sprite = sprite
     
+    def Update(self):
+        if self.rect.left > 1500 or self.rect.right < 0:
+            return
+        self.screen.blit(self.sprite, self.rect)
+    
+    def Move(self, x, y):
+        self.rect.move_ip(x, y)
+        
+class Clouds:
+    def __init__(self):
+        self.spritesheet = spritesheet('./Assets/Background/cloud.png')
+        
+        self.spritesheet.sheet = pygame.transform.scale(self.spritesheet.sheet, (300, 400))
+        
+        self.cloud_sprites = []
+        index_x = 0
+        index_y = 0
+        while index_y < 4:
+            self.cloud_sprites.append(self.spritesheet.image_at((index_x * 100, index_y * 100, 100, 100), -1))
+            index_x += 1
+            if index_x == 3:
+                index_x = 0
+                index_y += 1
+            
+    def Generate(self, pos, screen):
+        i = random.randint(0, 11)
+        return Cloud(pos, self.cloud_sprites[i], screen)
+        
         
         

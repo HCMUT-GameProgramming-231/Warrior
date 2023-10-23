@@ -38,7 +38,8 @@ class Slime:
         self.damage = 500
         self.type = 'slime'
         self.damage_taken = 0
-
+        self.sound = pygame.mixer.Sound('./sound/slime_jump.mp3')
+        self.playsound = False
         
     def GetActiveFrame(self):
         if self.falling:
@@ -60,7 +61,7 @@ class Slime:
     def IsCollidingWithBlock(self, block):
         rect = block[1]
         
-        if abs(self.real_rect.x - rect.x) > 70: return False, None
+        if abs(self.real_rect.x - rect.x) > 150: return False, None
         
         if self.real_rect.colliderect(rect):
             if self.real_rect.y + self.real_rect.h <= rect.y + 20:
@@ -108,20 +109,28 @@ class Slime:
     
     def DetectWarrior(self, warrior_rect):
         if self.temp_dead: return False
-        if abs(warrior_rect.x - self.real_rect.x) > 300: 
+        if abs(warrior_rect.x - self.real_rect.x) > 300 or abs(warrior_rect.y - self.real_rect.y) > 50: 
             self.detectWarrior = False
-            return False
+            return 
  
         if self.direction == 'right' and warrior_rect.x - self.real_rect.x > 0:
             self.detectWarrior = True
             self.jumping = True if not self.falling else False
-            return True
+            
+            if not self.playsound:
+                self.playsound = True
+                pygame.mixer.find_channel(True).play(self.sound)
+
         elif self.direction == 'left' and self.rect.x - warrior_rect.x > 0:
             self.detectWarrior = True
             self.jumping = True if not self.falling else False
-            return True
+
         
-        return False
+            if not self.playsound:
+                self.playsound = True
+                pygame.mixer.find_channel(True).play(self.sound)
+            
+        return 
     
     def Intergrate(self, deltaTime, time):
         if self.temp_dead:
@@ -224,7 +233,7 @@ class Boss(Slime):
         if abs(self.real_rect.x - rect.x) > 300: return False, None
         
         if self.real_rect.colliderect(rect):
-            if self.real_rect.y + self.real_rect.h <= rect.y + 20:
+            if self.real_rect.y + self.real_rect.h >= rect.y - 10:
                 return True, 'On'
             
             if self.real_rect.x <= rect.x + rect.w + 10 and self.real_rect.x + self.rect.w >= rect.x + rect.w:
