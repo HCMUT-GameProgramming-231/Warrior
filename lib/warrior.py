@@ -252,7 +252,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_g]:
             #print(time - self.interact_time)
-            if time - self.interact_time > 1000:
+            if time - self.interact_time > 500:
                 self.interact_time = time
                 self.interact = True
         

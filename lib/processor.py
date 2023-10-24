@@ -326,7 +326,7 @@ class Processor:
                 
                 if self.warrior.attacking or self.warrior.attacking_2 or self.warrior.dashing:
                     if self.warrior.attacking or self.warrior.attacking_2:      
-                        if pygame.time.get_ticks() - self.warrior.attack_time > 30:  
+                        if pygame.time.get_ticks() - self.warrior.attack_time > 200:  
                             attack_range = self.warrior.attack_range
                             type = 'attack' if self.warrior.attacking else 'attack_2' 
                             if slime.IsBeingAttacked(attack_range, self.timeFromBeginning, type):

@@ -4,7 +4,7 @@ import os
 import random
 
 class Slime:
-    def __init__(self, animation, pos):
+    def __init__(self, animation, pos, atMenu):
         self.animation = animation
         self.rect = pygame.Rect(pos, (100, 100))
         self.real_rect = pygame.Rect(pos, (70, 40))
@@ -41,6 +41,7 @@ class Slime:
         self.sound = pygame.mixer.Sound('./sound/slime_jump.mp3')
         self.playsound = False
         self.coin_rect = pygame.Rect((0, 0, 30, 30))
+        self.atMenu = atMenu
         
     def GetActiveFrame(self):
         if self.falling:
@@ -216,7 +217,7 @@ class Slime:
 class Boss(Slime):
      
     def __init__(self, animation, pos):
-         super().__init__(animation, pos)
+         super().__init__(animation, pos, False)
          for ani in self.animation:
              ani[0] = pygame.transform.scale(ani[0], (200, 200))
              ani[1] = pygame.transform.scale(ani[1], (200, 200))
@@ -224,8 +225,8 @@ class Boss(Slime):
          self.rect = pygame.Rect(pos, (200, 200))
          self.real_rect = pygame.Rect((pos, (150, 80)))
          self.type = 'boss'
-         self.maxHP = 5000
-         self.curHP = 5000
+         self.maxHP = 20000
+         self.curHP = 20000
          self.damage = 1000
          self.jump_speed = 200
          
@@ -389,9 +390,9 @@ class Slimes:
         self.coin = pygame.transform.scale(self.coin, (30, 30))
 
     
-    def Generate(self, pos):
+    def Generate(self, pos, atMenu = False):
         i = random.randint(0, len(self.slimes_sprite) - 3)
-        self.slimes.append(Slime(self.slimes_sprite[i], pos,))
+        self.slimes.append(Slime(self.slimes_sprite[i], pos, atMenu))
     
     def GenerateBos(self, pos):
         i = random.randint(1, 2)
@@ -414,7 +415,7 @@ class Slimes:
                 
             HP = pygame.Rect(slime.real_rect.x, slime.real_rect.y - 25, slime.curHP/slime.maxHP * 150, 10) if slime.type == 'boss'\
                 else pygame.Rect(slime.rect.x + 10, slime.rect.y + 15, slime.curHP/slime.maxHP * 80, 5)
-            pygame.draw.rect(self.screen, (255, 0, 0), HP)  
+            pygame.draw.rect(self.screen, (255, 0, 0), HP)  if not slime.atMenu else None
             self.screen.blit(frame, slime.rect)
             
             if slime.temp_dead:

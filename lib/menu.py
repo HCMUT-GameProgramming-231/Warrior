@@ -56,7 +56,7 @@ class MainMenu(pygame.sprite.Sprite):
         slime_map.close()
         
         for pos in slime_pos:
-            self.slimes.Generate(pos)
+            self.slimes.Generate(pos, True)
         
 		#buttons
         self.buttons = []
