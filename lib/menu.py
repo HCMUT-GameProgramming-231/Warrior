@@ -3,8 +3,9 @@ from .background import Ground, Clouds, VillageObjects, Flame
 from .slime import Slimes
 
 class MainMenu(pygame.sprite.Sprite):
-    def __init__(self, screen, WINDOW_WIDTH, WINDOW_HEIGHT):
-     
+    def __init__(self, screen, WINDOW_WIDTH, WINDOW_HEIGHT, w_name):
+        
+        self.setting = Setting(screen, w_name)
         self.playing_music = False
         self.SCREEN = screen
         self.width = WINDOW_WIDTH
@@ -146,7 +147,7 @@ class Credits:
 		self.screen_rect = self.screen.get_rect()
 		
 		font = pygame.font.SysFont("monospace", 40)
-		credit_list = ["CREDITS - ZombieHitHead"," ","Hoa Phuong Tung - 2012385","Nguyen Hoang Tri Vien - 2015043", "Nguyen Phu Vinh Toan - 2014775"]
+		credit_list = ["CREDITS - Wariror Vs Slimes"," ","Hoa Phương Tùng - 2012385","Nguyễn Hoàng Trí Viễn - 2015043", "Nguyễn Phú Vĩnh Toàn - 2014775"]
 		self.texts = []
 		
 		for i, line in enumerate(credit_list):
@@ -179,3 +180,106 @@ class Credits:
 				self.texts[i][0].y = self.screen_rect.bottom + i * 60
 
 		return status
+
+class Setting:
+    def __init__(self, screen, name):
+        self.screen = screen
+        self.name = name
+        self.font = pygame.font.SysFont("monospace", 40)
+        self.Volume = self.font.render('Volume:', False, (255, 255, 0))
+        self.Name = self.font.render('Name:', False, (255, 255, 0))
+        self.name_value = list(self.name)
+        
+        self.volume_text_rect = pygame.Rect((0, 0, 100, 50))
+        self.volume_text_rect.center = (600, 350)
+        
+        self.volume_value_rect = pygame.Rect((0, 0, 200, 30))
+        self.volume_value_rect.center = (850, 350)
+        
+        self.max_volume_rect = pygame.Rect(self.volume_value_rect)
+        
+        self.name_text_rect = pygame.Rect((0, 0, 100, 50))
+        self.name_text_rect.center = (600, 400)
+        
+        self.name_value_rect = pygame.Rect(0, 0, 200, 50)
+        self.name_value_rect.center = (850, 400)
+        
+        self.pointer = pygame.Rect((0, 0, 2, 40))
+        self.pointer.centery = self.name_value_rect.centery
+        self.pointer.left = self.name_value_rect.left + 2 + 25 * len(self.name)
+        
+        self.isChoosingNameField = False
+        
+        self.back_rect = pygame.Rect((0, 0, 100, 50))
+        self.back_rect.center = (750, 500)
+        self.back_text = self.font.render('Back', False, (0, 0, 0))
+        
+    def display(self, ev):
+        status = 'setting'
+        pos = pygame.mouse.get_pos()
+        rect = None
+        if self.max_volume_rect.collidepoint(pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            rect = 'vol'
+        
+        elif self.name_value_rect.collidepoint(pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            rect = 'name'
+        
+        elif self.back_rect.collidepoint(pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            rect = 'back'
+        
+        for e in ev:
+            if e.type == pygame.QUIT:
+                pygame.quit()
+                
+            elif e.type == pygame.MOUSEBUTTONDOWN:
+                if rect == 'vol':
+                    self.volume_value_rect.w = pos[0] - self.max_volume_rect.x
+                    pygame.mixer.music.set_volume(self.volume_value_rect.w / self.max_volume_rect.w)
+                    self.isChoosingNameField = False
+                elif rect == 'name':
+                    self.isChoosingNameField = True
+                elif rect == 'back':
+                    self.isChoosingNameField = False
+                    status = 'menu'
+                else:
+                    self.isChoosingNameField = False
+            
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_ESCAPE:
+                    status = 'menu'
+                    
+                elif self.isChoosingNameField:
+                    if e.key == pygame.K_BACKSPACE:
+                        if self.name_value:
+                            self.name_value.pop()
+                            self.pointer.x -= 25
+                            self.name = ''.join(self.name_value)
+                    elif e.key != pygame.K_RETURN:
+                        if len(self.name_value) < 7:
+                            letter = pygame.key.name (e.key)
+                            self.name_value.append(letter)
+                            self.pointer.x += 25
+                            self.name = ''.join(self.name_value)
+        
+                
+        self.screen.blit(self.Volume, self.volume_text_rect)
+        self.screen.blit(self.Name, self.name_text_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), self.max_volume_rect)
+        pygame.draw.rect(self.screen, (255, 0, 0), self.volume_value_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), self.name_value_rect)
+        if self.isChoosingNameField:
+            pygame.draw.rect(self.screen, (0, 0, 0), self.pointer)
+        
+        name = self.font.render(self.name, False, (0, 0, 0))
+        self.screen.blit(name, self.name_value_rect)
+        
+        pygame.draw.rect(self.screen, (255, 255, 0), self.back_rect)
+        self.screen.blit(self.back_text, self.back_rect)
+
+
+        return status, self.name
+
+            

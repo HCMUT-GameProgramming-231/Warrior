@@ -37,7 +37,7 @@ class Chest(pygame.sprite.Sprite):
         self.item_rect.y += 0
         
     def UnHidden(self, warrior_rect):
-        if abs(self.hole_rect.x - warrior_rect.x) > 100: return False
+        if abs(self.hole_rect.x - warrior_rect.x) > 100 or not self.close: return False
         if self.hole_rect.colliderect(warrior_rect):
             if self.hidden:
                 self.hidden = False
@@ -62,7 +62,7 @@ class Chest(pygame.sprite.Sprite):
         self.screen.blit(frame, self.rect)
         
         if self.frameNum == 4 and pygame.time.get_ticks() - self.UnHiddenTime < 2500:
-                if self.item_rect.centery >= self.hole_rect.centery - 30:
+                if self.item_rect.centery >= self.hole_rect.centery - 40:
                     self.item_rect.y -= 1
                 self.screen.blit(self.item, self.item_rect)
                     
@@ -119,14 +119,24 @@ class Chests:
             
         self.potion = pygame.image.load('./Assets/Item/HP_potion.png')
         self.potion = pygame.transform.scale(self.potion, (30, 30))
+        
+        self.coin = pygame.image.load('./Assets/Item/coin.png')
+        self.coin = pygame.transform.scale(self.coin, (30, 30))
+        
+        self.star = pygame.image.load('./Assets/Item/star.png')
+        self.star = pygame.transform.scale(self.star, (30, 30))
+        
+        self.sword = pygame.image.load('./Assets/Item/sword.png')
+        self.sword = pygame.transform.scale(self.sword, (30, 30))
+        
     
     def Generate(self, screen , pos, i = -1):
         i = random.randint(0, 3) if i == -1 else i
         if i == 0:
             return Chest(screen, pos, self.chest_1_animation, self.hole, self.wall, i, self.potion, 'potion')
         elif i == 1:
-            return Chest(screen, pos, self.chest_2_animation, self.hole, self.wall, i, self.potion, 'potion')
+            return Chest(screen, pos, self.chest_2_animation, self.hole, self.wall, i, self.coin, 'coin')
         elif i == 2:
-            return Chest(screen, pos, self.chest_3_animation, self.hole, self.wall, i, self.potion, 'potion')
+            return Chest(screen, pos, self.chest_3_animation, self.hole, self.wall, i, self.sword, 'sword')
         else:
-            return Chest(screen, pos, self.chest_4_animation, self.hole, self.wall, i, self.potion, 'potion')
+            return Chest(screen, pos, self.chest_4_animation, self.hole, self.wall, i, self.star, 'star')

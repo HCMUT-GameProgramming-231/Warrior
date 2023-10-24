@@ -173,7 +173,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.collide_right = False
         #w = 70 if attacking else 35
         self.rect = pygame.Rect(0, 0, 20, 80)
-        self.rect.center = (200, 450)
+        self.rect.center = (200, 670)
         
         self.attack_range = pygame.Rect(0, 0, 40, 80)
         self.attack_time = 0
@@ -192,8 +192,8 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.isHoldingLeft = False
         self.isHoldingRight = False
         
-        self.findHiddenChest = False
-        self.find_time = 0
+        self.interact = False
+        self.interact_time = 0
         
         self.maxHP = 2000
         self.curHP = 2000
@@ -217,7 +217,26 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.jump_sound = pygame.mixer.Sound('./sound/jump.mp3')
         
         self.name = 'HpT'
+        self.name_rect = pygame.Rect((0, 0, 50, 20))
         self.font = pygame.font.SysFont('Comic Sans MS', 15)
+        self.coin = 0
+        self.coin_rect = pygame.Rect((10, 10, 60, 60))
+        self.coin_img = pygame.image.load('./Assets/Item/coin.png')
+        self.coin_img = pygame.transform.scale(self.coin_img, (60, 60))
+        self.font_big = pygame.font.SysFont('Comic Sans MS', 50)
+        self.font_big_rect = pygame.Rect((80, 0, 60, 100))
+        
+        self.unbeatable = False
+        self.begin_unbeatable_time = 0
+        self.n = 0
+        
+        self.mark = pygame.image.load('./Assets/Warrior/mark.png')
+        self.mark = pygame.transform.scale(self.mark, (40, 20))
+        self.mark_rect = pygame.Rect((0, 0, 40, 20))
+        self.marking = False
+        
+        self.damage_rect = pygame.Rect((0, 0, 50, 20))
+        
     
     def GetEvent(self, events):
         
@@ -228,14 +247,14 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.standing = True
         self.isHoldingLeft = False
         self.isHoldingRight = False
-        self.findHiddenChest = False
+        self.interact = False
         time = pygame.time.get_ticks()
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_g]:
-            #print(time - self.find_time)
-            if time - self.find_time > 500:
-                self.find_time = time
-                self.findHiddenChest = True
+            #print(time - self.interact_time)
+            if time - self.interact_time > 1000:
+                self.interact_time = time
+                self.interact = True
         
         if keystate[pygame.K_RIGHT]:
             self.standing = False
@@ -446,7 +465,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
             elif self.fainting:
                 self.frameIndex = self.currentFrameNums - 1
-                if newTime - self.faint_time > self.faint_delay:
+                if newTime - self.faint_time > self.faint_delay and self.curHP > 0:
                     self.fainting = False
                     standing = False
                     self.attacked_by = None
@@ -482,6 +501,12 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.timeFromBeginning += self.DELTA
         self.currentFrameTime += self.DELTA
 
+        if self.rect.top > 750:
+            self.curHP = 0
+            return
+        
+        if self.timeFromBeginning - self.begin_unbeatable_time >= 10:
+            self.unbeatable = False
         
         if self.status == 'move' or self.status == 'dash' or self.status == 'quick_move':
             speed = self.move_speed if self.status == 'move' else self.dash_speed
@@ -546,21 +571,37 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
         rect.centery -= 10
         
-        #pygame.draw.rect(self.SCREEN, (255, 0, 0), rect)
-        #pygame.draw.rect(self.SCREEN, (0, 255, 0), self.rect)
-        #if self.attacking or self.attacking_2:
-         #  pygame.draw.rect(self.SCREEN, (100, 200, 150), self.attack_range)
+
         HP_rect = pygame.Rect(self.rect.x - 20, self.rect.y - 10, self.curHP / self.maxHP * 60, 5)
-        pygame.draw.rect(self.SCREEN, (255, 0, 0), HP_rect)
-        HP_rect.y -= 30
-        HP_rect.x += 15
+        if not self.unbeatable:
+            pygame.draw.rect(self.SCREEN, (255, 0, 0), HP_rect)
+        else:
+            self.n += 1
+            if self.n % 2 == 0:
+                 pygame.draw.rect(self.SCREEN, (0, 0, 0), HP_rect)
+            else:
+                 pygame.draw.rect(self.SCREEN, (255, 255, 255), HP_rect)
+                
+        if self.marking:
+            self.mark_rect.centerx = self.rect.centerx
+            self.mark_rect.bottom = self.rect.top - 40
+            self.SCREEN.blit(self.mark, self.mark_rect)
+        
+        self.name_rect.centerx = self.rect.centerx + 10
+        self.name_rect.bottom = self.rect.top - 20
         name = self.font.render(self.name, False, (255, 255, 255))
-        self.SCREEN.blit(name, HP_rect)
+        self.SCREEN.blit(name, self.name_rect)
+       
         if self.fainting:
+            self.damage_rect.centerx = self.rect.centerx + 10
+            self.damage_rect.y = self.rect.y - 60
             damage = 500 if self.attacked_by == 'slime'  else 2000
             text_surface = self.font.render(str(damage), False, (255, 0, 0))
-            HP_rect.y -= 20
-            self.SCREEN.blit(text_surface, HP_rect)
+            self.SCREEN.blit(text_surface, self.damage_rect)
+            
+        num_coin = self.font_big.render('X'+str(self.coin), False, (100, 255, 100))
+        self.SCREEN.blit(num_coin, self.font_big_rect)
+        self.SCREEN.blit(self.coin_img, self.coin_rect)
         self.SCREEN.blit(frame, rect)
             
         
@@ -640,7 +681,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
             
             else:
                 if self.rect.x + self.rect.w >= rect.x - 10 and self.rect.x <= rect.x:
-                    if block[-1] == 9 or block[-1] == 10:
+                    if block[-2] == 9 or block[-2] == 10:
                         #print (self.rect.y - rect.y)
                         if self.rect.y - rect.y >= 0:
                             return True, 'SlipLeft'
@@ -652,7 +693,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                     return True, 'Left'
 
                 if self.rect.x <= rect.x + rect.w + 10:
-                    if block[-1] == 9 or block[-1] == 10:
+                    if block[-2] == 9 or block[-2] == 10:
                          if self.rect.y - rect.y >= 0:
                             return True, 'SlipRight'
 
@@ -674,4 +715,84 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if self.rect.colliderect(slime_rect):
                 return True
 
+    def reset(self):
+        #init start status
+        self.frameTime = 0
+        self.frameIndex = 0
+        self.currentFrameNums = 6
+        
+        self.status = 'stand'
+        
+        self.attacking = False
+        
+        self.jumping = False
+        
+        self.falling = False
+
+        self.faint_time = 0
+        self.fainting = False
+        self.standing = False
+        self.hanging = False
+        
+        self.stand_up = False
+        
+        self.quick_moving = False
+        
+        self.dashing = False
+        self.attacking_2 = False
+        self.slipping = False
+        self.falling_time = 0
+        
+        
+        self.direction = 'right'
+        
+        self.collide_left = False
+        self.collide_right = False
+        #w = 70 if attacking else 35
+        self.rect = pygame.Rect(0, 0, 20, 80)
+        self.rect.center = (200, 670)
+        
+        self.attack_range = pygame.Rect(0, 0, 40, 80)
+        self.attack_time = 0
+        #speed
+        self.move_speed = 200
+        self.quick_move_speed = 300
+        self.dash_speed = 300
+        self.jump_speed = 400
+        self.slip_speed = 150
+        
+        self.jump_when_slip_time_left = 0
+        self.jump_when_slip_time_right = 0
+        self.jump_when_slipping_time = 0
+        self.jump_delay = 1000
+        
+        self.isHoldingLeft = False
+        self.isHoldingRight = False
+        
+        self.interact = False
+        self.interact_time = 0
+        
+        self.maxHP = 2000
+        self.curHP = 2000
+        
+        self.attacked_by = None
+        
+        self.timeFromBeginning = 0
+        self.currentTime = 0
+        self.currentFrameTime = 0
+
+        self.background_moving = False
+        #self.lastState = None
+        self.accumulator = 0
+        
+        self.attack_damage = 200
+        self.attack_2_damage = 500
+        self.dash_damage = 50
+        self.coin = 0
+        
+        self.unbeatable = False
+        self.begin_unbeatable_time = 0
+        self.n = 0
+
+        self.marking = False
         

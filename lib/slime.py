@@ -40,6 +40,7 @@ class Slime:
         self.damage_taken = 0
         self.sound = pygame.mixer.Sound('./sound/slime_jump.mp3')
         self.playsound = False
+        self.coin_rect = pygame.Rect((0, 0, 30, 30))
         
     def GetActiveFrame(self):
         if self.falling:
@@ -109,7 +110,7 @@ class Slime:
     
     def DetectWarrior(self, warrior_rect):
         if self.temp_dead: return False
-        if abs(warrior_rect.x - self.real_rect.x) > 300 or abs(warrior_rect.y - self.real_rect.y) > 50: 
+        if abs(warrior_rect.x - self.real_rect.x) > 300 or abs(warrior_rect.y - self.real_rect.y) > 100: 
             self.detectWarrior = False
             return 
  
@@ -139,6 +140,7 @@ class Slime:
             return
         
         if self.curHP <= 0:
+            self.coin_rect.centery = self.real_rect.centery
             self.temp_dead = True
             self.dead_time = time
             return
@@ -195,6 +197,7 @@ class Slime:
             
                 
     def Update(self): 
+        self.real_rect.center = self.rect.center
         if self.moving:
             self.frameNum += 0.05
             if self.frameNum >= 2:
@@ -233,7 +236,7 @@ class Boss(Slime):
         if abs(self.real_rect.x - rect.x) > 300: return False, None
         
         if self.real_rect.colliderect(rect):
-            if self.real_rect.y + self.real_rect.h >= rect.y - 10:
+            if self.real_rect.y + self.real_rect.h <= rect.y + 10 and self.real_rect.y + self.real_rect.h >= rect.y:
                 return True, 'On'
             
             if self.real_rect.x <= rect.x + rect.w + 10 and self.real_rect.x + self.rect.w >= rect.x + rect.w:
@@ -300,13 +303,15 @@ class Boss(Slime):
         return False
     
     def Intergrate(self, deltaTime, time):
+        
             
         if self.temp_dead:
             #print(time - self.dead_time)
-            if time - self.dead_time >= 1: self.dead = True
+            if time - self.dead_time >= 2: self.dead = True
             return
         
         if self.curHP <= 0:
+            self.coin_rect.centery = self.real_rect.centery
             self.temp_dead = True
             self.dead_time = time
             return
@@ -359,7 +364,7 @@ class Boss(Slime):
             elif self.rect.x >= self.x_upper:
                 self.direction = 'left'
         
-        self.real_rect.center = self.rect.center
+        
                 
     
 class Slimes:
@@ -380,10 +385,13 @@ class Slimes:
                 self.slimes_sprite += [temp]
         
         self.slimes = []
+        self.coin = pygame.image.load('./Assets/Item/coin.png')
+        self.coin = pygame.transform.scale(self.coin, (30, 30))
+
     
     def Generate(self, pos):
         i = random.randint(0, len(self.slimes_sprite) - 3)
-        self.slimes.append(Slime(self.slimes_sprite[i], pos))
+        self.slimes.append(Slime(self.slimes_sprite[i], pos,))
     
     def GenerateBos(self, pos):
         i = random.randint(1, 2)
@@ -403,10 +411,18 @@ class Slimes:
                 else:
                     text_surface = slime.font.render(str(slime.damage_taken), False, (255, 0, 0))
                     self.screen.blit(text_surface, slime.damage_rect)
+                
             HP = pygame.Rect(slime.real_rect.x, slime.real_rect.y - 25, slime.curHP/slime.maxHP * 150, 10) if slime.type == 'boss'\
                 else pygame.Rect(slime.rect.x + 10, slime.rect.y + 15, slime.curHP/slime.maxHP * 80, 5)
             pygame.draw.rect(self.screen, (255, 0, 0), HP)  
             self.screen.blit(frame, slime.rect)
+            
+            if slime.temp_dead:
+                slime.coin_rect.centerx = slime.real_rect.centerx
+                if slime.coin_rect.y > slime.real_rect.y - 50:
+                    slime.coin_rect.y -= 1
+                #pygame.draw.rect(self.screen, (0, 0, 0), slime.coin_rect)
+                self.screen.blit(self.coin, slime.coin_rect)
             
     def Intergrate(self, deltaTime, time):
         for slime in self.slimes:
