@@ -2,9 +2,9 @@
 
 ## warrior.py
  - right left arrow to move
- - up arrow to jump (jump wont be stop so need to restart game)
+ - up arrow to jump 
  - z to quick move
  - x to attack
- - c to dash
+ - c to dash (only available when moving)
  - up arrow to jump when slip on wall
- - down arrow to fall when hanging
+ - G to interact

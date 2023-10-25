@@ -105,7 +105,7 @@ class Processor:
         self.accumulator = 0
         self.screen = screen
         
-    def Update(self, fps, SCREEN):
+    def Update(self, fps):
         ev = pygame.event.get()
         newTime = pygame.time.get_ticks()
         frameTime = (newTime - self.currentTime) / 1000
@@ -192,7 +192,7 @@ class Processor:
             self.slimes.Update(self.timeFromBeginning)
             
             self.screen.blit(self.text_the_end, self.font_rect) if self.state == 'end' else self.screen.blit(self.text_game_over, self.font_rect)
-            if pygame.time.get_ticks() / 1000 - self.end_time >= 7:
+            if pygame.time.get_ticks() / 1000 - self.end_time >= 10:
                 self.state = 'menu'
                 self.reset()
         
@@ -213,7 +213,7 @@ class Processor:
                     self.warrior.faint_time = self.timeFromBeginning * 1000
                     self.warrior.ChangeStatus('faint')
                     self.warrior.curHP -= slime.damage
-                    self.warrior.attacked_by = 'slime'
+                    self.warrior.attacked_by = 'slime' if slime.type == 'slime' else 'boss'
                     break
             
             if not slime.jumping:

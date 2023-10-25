@@ -111,7 +111,7 @@ class Slime:
     
     def DetectWarrior(self, warrior_rect):
         if self.temp_dead: return False
-        if abs(warrior_rect.x - self.real_rect.x) > 300 or abs(warrior_rect.y - self.real_rect.y) > 100: 
+        if abs(warrior_rect.x - self.real_rect.x) > 150 or abs(warrior_rect.y - self.real_rect.y) > 100: 
             self.detectWarrior = False
             return 
  
@@ -234,7 +234,7 @@ class Boss(Slime):
     def IsCollidingWithBlock(self, block):
         rect = block[1]
         
-        if abs(self.real_rect.x - rect.x) > 300: return False, None
+        if abs(self.real_rect.x - rect.x) > 200: return False, None
         
         if self.real_rect.colliderect(rect):
             if self.real_rect.y + self.real_rect.h <= rect.y + 10 and self.real_rect.y + self.real_rect.h >= rect.y:

@@ -20,9 +20,9 @@ clock = pygame.time.Clock()
 while True:
     SCREEN.fill('#152238')
     
-    proc.Update(70, SCREEN)
+    proc.Update(60)
 
 
     pygame.display.update()
-    clock.tick(70)
+    clock.tick(60)
     #print(clock.get_fps())

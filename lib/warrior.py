@@ -343,7 +343,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 return
         
         if self.falling:
-            if  status == 'hanging':
+            if  status == 'hanging' or self.status == 'slip':
                 self.falling = False
             else:
                 return
@@ -516,6 +516,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
                 self.rect.centerx -= int(speed * deltaTime)
                 
         if self.status == 'jump':
+            self.jumping = True
             self.rect.centery -= int(self.jump_speed * deltaTime)
             self.jump_speed -= int(500 * deltaTime)
             
@@ -595,7 +596,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         if self.fainting:
             self.damage_rect.centerx = self.rect.centerx + 10
             self.damage_rect.y = self.rect.y - 60
-            damage = 500 if self.attacked_by == 'slime'  else 2000
+            damage = 500 if self.attacked_by == 'slime'  else 1000
             text_surface = self.font.render(str(damage), False, (255, 0, 0))
             self.SCREEN.blit(text_surface, self.damage_rect)
             
@@ -670,6 +671,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
     def IsColliding(self, block):
         
         rect = block[1]
+        if rect.x <0 or rect.x > 1500: return False, None
         if self.rect.colliderect(rect):
             
             if self.rect.y + self.rect.h >= rect.y and self.rect.y + self.rect.h <= rect.y  + 10:
