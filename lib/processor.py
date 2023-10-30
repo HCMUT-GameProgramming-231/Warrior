@@ -185,14 +185,11 @@ class Processor:
             
             for c in self.chests_list:
                 c.Update()
-                
-            for obj in self.vil_obj:
-                obj.Update()
-            
+
             self.slimes.Update(self.timeFromBeginning)
-            
+            print(pygame.time.get_ticks() / 1000 - self.end_time )
             self.screen.blit(self.text_the_end, self.font_rect) if self.state == 'end' else self.screen.blit(self.text_game_over, self.font_rect)
-            if pygame.time.get_ticks() / 1000 - self.end_time >= 10:
+            if pygame.time.get_ticks() / 1000 - self.end_time >= 7:
                 self.state = 'menu'
                 self.reset()
         
@@ -366,11 +363,11 @@ class Processor:
                     else:
                         if self.warrior.interact:
                             if self.warrior.coin > 0:
-                                i = random.randint(0, len(self.ground.hidden) - 1)
-                                self.ground.hidden[i][-1] = False
-                                self.ground.hidden.remove(self.ground.hidden[i])
+                                self.ground.hidden[self.ground.hidden_index][-1] = False
+                                #self.ground.hidden.remove(self.ground.hidden[i])
                                 self.warrior.coin -= 1
                                 self.warrior.interact = False
+                                self.ground.hidden_index += 1
                     
                 
                     
@@ -424,19 +421,35 @@ class Processor:
             self.warrior.dash_speed = 300
             self.cam.pos_x = self.cam.begin_pos_x
     
-        if self.warrior.curHP <= 0:
+        if self.warrior.curHP <= 0 and self.state != 'gameover':
             self.state = 'gameover'
             self.warrior.dead = True
-            self.end_time = self.timeFromBeginning
+            self.end_time = pygame.time.get_ticks()
             
-        if not self.slimes.slimes:
+        if not self.slimes.slimes and self.state != 'end':
             self.state = 'end'
-            self.end_time = self.timeFromBeginning
-            
+            self.end_time = pygame.time.get_ticks()
+           
     def reset(self):
         self.warrior.reset()
-        
+        self.ground.reset()
+        self.cam.reset()
+        self.slimes.reset()
             
+        for f in self.flame:
+            f.reset()
+        
+        for obj in self.vil_obj:
+            obj.reset()
+                
+        for cloud in self.clouds:
+            cloud.reset()
+            
+        for c in self.chests_list:
+            c.reset()
+            
+        self.interactable = self.chests_list + [self.well]
+                
         
 
 

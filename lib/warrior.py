@@ -236,6 +236,7 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.marking = False
         
         self.damage_rect = pygame.Rect((0, 0, 50, 20))
+        self.dead = False
         
     
     def GetEvent(self, events):
@@ -480,23 +481,12 @@ class WarriorAnimation(pygame.sprite.Sprite):
             if standing:
                 self.ChangeStatus('stand')
             
-            
-            
-            
-        
-        """
-        alpha = self.accumulator / self.DELTA
-        renderState = self  + self.lastState
-
-        print(renderState.rect.centerx)
-        renderState.Render()
-        """
-       
         self.Render()
         
     
         
     def Intergrate(self, deltaTime):
+        if self.dead :return
         
         self.timeFromBeginning += self.DELTA
         self.currentFrameTime += self.DELTA
@@ -797,4 +787,5 @@ class WarriorAnimation(pygame.sprite.Sprite):
         self.n = 0
 
         self.marking = False
+        self.dead = False
         

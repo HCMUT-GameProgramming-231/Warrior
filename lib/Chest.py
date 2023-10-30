@@ -7,6 +7,8 @@ class Chest(pygame.sprite.Sprite):
     def __init__(self, screen, pos, animation, hole, wall, type, item, item_name):
         self.screen = screen
         self.rect = pygame.Rect(pos, (75, 75))
+        self.original_pos = pygame.Rect(self.rect)
+        
         self.frameNum = 0
         self.animation = animation
         self.hole = hole
@@ -31,10 +33,13 @@ class Chest(pygame.sprite.Sprite):
         else:
             self.hole_rect.x -= 30
             self.hole_rect.y += 5
+        
+        self.original_hole_pos = pygame.Rect(self.hole_rect)
+        
 
         self.item_rect = pygame.Rect((0, 0), (30, 30))
         self.item_rect.center = self.hole_rect.center
-        self.item_rect.y += 0
+        self.original_item_pos = pygame.Rect(self.item_rect)
         
     def UnHidden(self, warrior_rect):
         if abs(self.hole_rect.x - warrior_rect.x) > 100 or not self.close: return False
@@ -47,6 +52,12 @@ class Chest(pygame.sprite.Sprite):
                 return True
         return False
         
+    def reset(self):
+        self.rect =pygame.Rect(self.original_pos)
+        self.hole_rect = pygame.Rect(self.original_hole_pos)
+        self.item_rect = pygame.Rect(self.original_item_pos)
+        self.hidden = True
+        self.close = True
     
     def Move(self, x, y):
         self.rect.move_ip(x, y)

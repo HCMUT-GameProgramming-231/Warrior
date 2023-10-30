@@ -1,6 +1,7 @@
 from .spritesheet import spritesheet
 import pygame
 import os
+import copy
 import random
 
 class Slime:
@@ -388,15 +389,26 @@ class Slimes:
         self.slimes = []
         self.coin = pygame.image.load('./Assets/Item/coin.png')
         self.coin = pygame.transform.scale(self.coin, (30, 30))
+        
+        self.original_slimes = []
 
     
     def Generate(self, pos, atMenu = False):
         i = random.randint(0, len(self.slimes_sprite) - 3)
-        self.slimes.append(Slime(self.slimes_sprite[i], pos, atMenu))
+        slime = Slime(self.slimes_sprite[i], pos, atMenu)
+        original_slime = Slime(self.slimes_sprite[i], pos, atMenu)
+        self.slimes.append(slime)
+        self.original_slimes.append(original_slime)
     
     def GenerateBos(self, pos):
         i = random.randint(1, 2)
-        self.slimes.append(Boss(self.slimes_sprite[-i], pos))
+        boss = Boss(self.slimes_sprite[-i], pos)
+        original_boss = Boss(self.slimes_sprite[-i], pos)
+        self.slimes.append(boss)
+        self.original_slimes.append(original_boss)
+
+    def reset(self):
+        self.slimes = self.original_slimes.copy()
     
     def Update(self, time):
         for slime in self.slimes:

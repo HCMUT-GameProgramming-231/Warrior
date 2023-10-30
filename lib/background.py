@@ -37,6 +37,7 @@ class Ground(pygame.sprite.Sprite):
         
         self.hidden = []
         self.map = []
+        self.original_pos = []
         rect = pygame.Rect(0, 0, 0, 0)
         i = 0
         for y in range(len(self.tile_map)):
@@ -52,6 +53,7 @@ class Ground(pygame.sprite.Sprite):
                         rect.h  = gr_rect.h
                         rect.w = gr_rect.w
                         hidden = [self.ground_list[tile-1], pygame.Rect(rect), i, tile, True]
+                        self.original_pos += [pygame.Rect(rect)]
                         self.map += [hidden]
                         self.hidden += [hidden]
                         rect.x += gr_rect.w
@@ -61,12 +63,14 @@ class Ground(pygame.sprite.Sprite):
                     rect.h  = gr_rect.h
                     rect.w = gr_rect.w
                     self.map += [[self.ground_list[tile-1], pygame.Rect(rect), i, tile, False]]
+                    self.original_pos += [pygame.Rect(rect)]
                     rect.x += gr_rect.w
                 i += 1
 
             rect.x = 0
             rect.y += 50
-
+            
+            self.hidden_index = 0
 
             
         
@@ -80,11 +84,20 @@ class Ground(pygame.sprite.Sprite):
     def Move(self, x, y):
         for i in range(len(self.map)):
             self.map[i][1].move_ip(x, y)
+            
+    def reset(self):
+        self.hidden_index = 0
+        for (m,r) in zip(self.map, self.original_pos):
+            m[1] = pygame.Rect(r)
+        for h in self.hidden:
+            h[-1] = True
+        
 
 class Flame(pygame.sprite.Sprite):
     
     def __init__(self, screen, pos):
         self.rect = pygame.Rect(pos, (50, 50))
+        self.original_pos = pygame.Rect(self.rect)
         self.screen = screen
         self.frameNum = 0
         self.spritesheet = spritesheet('./Assets/Background/TX FX Flame.png')
@@ -106,19 +119,7 @@ class Flame(pygame.sprite.Sprite):
         self.status = 'burning'
                 
     def GetActiveFrame(self):
-        """
-        if self.status == 'burning':
-            self.frameNum += 0.2
-        else:
-            self.frameNum += 0.03
-            
-        if self.status == 'burning':
-            if self.frameNum >= 25:
-                self.frameNum = 15
-        else:
-            if self.frameNum >= 36:
-                self.frameNum = 35
-        """
+
         self.frameNum += 0.25
         if self.frameNum >= 27:
             self.frameNum = 14
@@ -133,12 +134,16 @@ class Flame(pygame.sprite.Sprite):
     def Move(self, x, y):
         self.rect.move_ip(x, y)
         
+    def reset(self):
+        self.rect = pygame.Rect(self.original_pos)
+        
 
 class VillageObject(pygame.sprite.Sprite):
     
     def __init__(self, sprite, pos, size, screen):
         self.sprite = sprite
         self.rect = pygame.Rect(pos, size)
+        self.original_pos = pygame.Rect(self.rect)
         self.screen = screen
     
     def Update(self):
@@ -146,6 +151,9 @@ class VillageObject(pygame.sprite.Sprite):
         
     def Move(self, x, y):
         self.rect.move_ip(x, y)
+        
+    def reset(self):
+        self.rect = pygame.Rect(self.original_pos)
         
 class VillageObjects:
     
@@ -215,6 +223,7 @@ class Cloud(pygame.sprite.Sprite):
         self.screen = screen
         self.pos_y = pos[1]
         self.rect = pygame.Rect(pos, (100, 100))
+        self.original_pos = pygame.Rect(self.rect)
         self.sprite = sprite
     
     def Update(self):
@@ -224,6 +233,9 @@ class Cloud(pygame.sprite.Sprite):
     
     def Move(self, x, y):
         self.rect.move_ip(x, y)
+        
+    def reset(self):
+        self.rect = pygame.Rect(self.original_pos)
         
 class Clouds:
     def __init__(self):
